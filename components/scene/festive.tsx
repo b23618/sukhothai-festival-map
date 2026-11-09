@@ -182,34 +182,8 @@ function LandmarkLights() {
   return <>{lm.map(p => { const [x, z] = pointWorld(p), y = Math.max(heightAt(p.x, p.y), WATER_Y);
     return <group key={p.id} position={[x, y, z]}><pointLight color="#ffb05a" intensity={.9} distance={2.6} decay={1.6} position={[.5, .5, .6]} /><pointLight color="#ff9a3a" intensity={.4} distance={1.8} decay={1.6} position={[-.5, .3, -.4]} /></group>; })}</>;
 }
-/** Festival-goers: small low-poly figures (drawn larger than life so they read at map scale) strolling back and forth along the OSM paths near the venue. Decorative, not real crowd data. */
-const WALKERS = LOW ? 50 : 110, SHIRTS = ['#ff6b8b', '#ffd24a', '#4dc3ff', '#7ddc6a', '#ff9a3a', '#b48cff', '#ffffff', '#ff5a4a', '#3fd2c7'], SKINS = ['#f1c9a0', '#d9a273', '#b9825a', '#8d5a3a'];
-const SC = new THREE.Vector3(1.6, 1.6, 1.6);
-function Crowd() {
-  const body = useRef<THREE.InstancedMesh>(null), head = useRef<THREE.InstancedMesh>(null);
-  const walkers = useMemo(() => {
-    const r = mulberry32(777), near = roads.filter(rd => rd.pts.some(q => Math.hypot(q[0] - 300, q[1] - 345) < 200));
-    const lines = near.map(rd => { const cum = [0]; for (let i = 1; i < rd.pts.length; i++) cum.push(cum[i - 1] + Math.hypot(rd.pts[i][0] - rd.pts[i - 1][0], rd.pts[i][1] - rd.pts[i - 1][1])); return { pts: rd.pts, cum, len: cum[cum.length - 1] }; }).filter(l => l.len > 25);
-    if (!lines.length) return [];
-    return Array.from({ length: WALKERS }, () => { const l = lines[Math.floor(r() * lines.length)], win = Math.min(l.len, 50 + r() * 90), a = r() * (l.len - win);
-      return { l, a, win, speed: 3 + r() * 3, ph: r() * 100, shirt: new THREE.Color(SHIRTS[Math.floor(r() * SHIRTS.length)]), skin: new THREE.Color(SKINS[Math.floor(r() * SKINS.length)]) }; });
-  }, []);
-  useLayoutEffect(() => { walkers.forEach((w, i) => { body.current?.setColorAt(i, w.shirt); head.current?.setColorAt(i, w.skin); }); if (body.current?.instanceColor) body.current.instanceColor.needsUpdate = true; if (head.current?.instanceColor) head.current.instanceColor.needsUpdate = true; }, [walkers]);
-  const m = useMemo(() => new THREE.Matrix4(), []), q = useMemo(() => new THREE.Quaternion(), []), e = useMemo(() => new THREE.Euler(), []);
-  useFrame(st => { const bm = body.current, hm = head.current; if (!bm || !hm) return; const t = st.clock.elapsedTime;
-    walkers.forEach((w, i) => { const u = ((t * w.speed + w.ph) % (2 * w.win)), d = u < w.win ? u : 2 * w.win - u, s = w.a + d; let k = 1; while (k < w.l.cum.length - 1 && w.l.cum[k] < s) k++;
-      const c0 = w.l.cum[k - 1], f = (s - c0) / Math.max(1e-6, w.l.cum[k] - c0), p0 = w.l.pts[k - 1], p1 = w.l.pts[k], gx = p0[0] + (p1[0] - p0[0]) * f, gy = p0[1] + (p1[1] - p0[1]) * f, [x, z] = toWorld(gx, gy), y = Math.max(heightAt(gx, gy), WATER_Y) + .01 + Math.abs(Math.sin(t * 9 + w.ph)) * .012;
-      e.set(0, 0, Math.sin(t * 9 + w.ph) * .06); q.setFromEuler(e);
-      m.compose(new THREE.Vector3(x, y + .09, z), q, SC); bm.setMatrixAt(i, m); m.compose(new THREE.Vector3(x, y + .22, z), q, SC); hm.setMatrixAt(i, m); });
-    bm.instanceMatrix.needsUpdate = true; hm.instanceMatrix.needsUpdate = true; });
-  if (!walkers.length) return null;
-  return <>
-    <instancedMesh ref={body} args={[undefined, undefined, walkers.length]} frustumCulled={false} castShadow><cylinderGeometry args={[.026, .036, .11, 8]} /><meshStandardMaterial roughness={.8} /></instancedMesh>
-    <instancedMesh ref={head} args={[undefined, undefined, walkers.length]} frustumCulled={false}><sphereGeometry args={[.03, 10, 8]} /><meshStandardMaterial roughness={.7} /></instancedMesh>
-  </>;
-}
 /** Giant krathong + flame bowl always; krathong fleet, sky lanterns and fireworks only at night (real clock after 19:00, or the night button). */
-export function Festive() { const night = useMapStore(s => s.time === 'night'); return <><Symbols /><Crowd />{night && <><PlaceGlow />{!LOW && <LandmarkLights />}<KrathongFleet /><KhomLoi /><Fireworks /><TitleFireworks /></>}</>; }
+export function Festive() { const night = useMapStore(s => s.time === 'night'); return <><Symbols />{night && <><PlaceGlow />{!LOW && <LandmarkLights />}<KrathongFleet /><KhomLoi /><Fireworks /><TitleFireworks /></>}</>; }
 /** Blue "you are here" marker at the visitor's GPS position (only when it falls inside the diorama). */
 export function UserDot() {
   const pos = useMapStore(s => s.userPos), ref = useRef<THREE.Mesh>(null);
