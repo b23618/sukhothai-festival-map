@@ -13,6 +13,9 @@ import { useMapStore, type TimeOfDay } from '@/store/useMapStore';
 import { M, glowMaterials } from './materials';
 import { OsmGround, Roads, Terrain, Vegetation, Water } from './environment';
 import { HeritageAt } from './heritage';
+import { Festive, UserDot } from './festive';
+import { inDiorama } from '@/lib/georef';
+import { endpoint } from '@/lib/route';
 import { Facility, Festival } from './structures';
 
 const LOOK: Record<TimeOfDay, { sun: string; sunI: number; sunPos: [number, number, number]; hemiSky: string; hemiGround: string; hemiI: number; top: string; hor: string; glow: number }> = {
@@ -42,6 +45,7 @@ function ModelSlot({ glb, scale, children }: { glb?: string; scale: number; chil
 const HERITAGE = new Set(['wat-mahathat', 'wat-chana', 'noen-prasat', 'wat-mai', 'wat-sa-si', 'traphang-ngoen', 'monument', 'pond-feature']);
 const FESTIVAL = new Set(['stage', 'tent', 'pavilion', 'platform', 'food', 'rest', 'arch', 'floating-pier']);
 function PointModel({ p, selected }: { p: Point; selected: boolean }) {
+  if (!inDiorama([p.x, p.y])) return null;
   const select = useMapStore(s => s.select), editor = useMapStore(s => s.editor);
   const [x, z] = pointWorld(p), ground = heightAt(p.x, p.y), inWater = p.category === 'activity' && pondAt([p.x, p.y]) >= 0;
   const model = inWater && FESTIVAL.has(p.model) ? 'floating-pier' : p.model, y = model === 'floating-pier' ? WATER_Y + .035 : Math.max(ground, WATER_Y + .01);
@@ -66,9 +70,9 @@ function SelectionRing({ r }: { r: number }) {
 function Scenery() { return <>{scenery.map(s => { return <HeritageAt key={s.id} model={s.model} gx={s.c[0]} gy={s.c[1]} />; })}</>; }
 /** Orange path between the chosen route endpoints, draped over the terrain. */
 function RouteLine() {
-  const points = useMapStore(s => s.points), fromId = useMapStore(s => s.routeFrom), toId = useMapStore(s => s.routeTo);
-  const a = points.find(p => p.id === fromId), b = points.find(p => p.id === toId);
-  const pts = useMemo(() => { if (!a || !b || a.id === b.id) return null; const n = 48; return Array.from({ length: n + 1 }, (_, i) => { const t = i / n, gx = a.x + (b.x - a.x) * t, gy = a.y + (b.y - a.y) * t, [x, z] = toWorld(gx, gy); return new THREE.Vector3(x, Math.max(heightAt(gx, gy), WATER_Y) + .12, z); }); }, [a, b]);
+  const points = useMapStore(s => s.points), fromId = useMapStore(s => s.routeFrom), toId = useMapStore(s => s.routeTo), user = useMapStore(s => s.userPos);
+  const a = endpoint(fromId, points, user), b = endpoint(toId, points, user), ak = a?.grid.join(), bk = b?.grid.join();
+  const pts = useMemo(() => { if (!a || !b || fromId === toId) return null; const n = 48; return Array.from({ length: n + 1 }, (_, i) => { const t = i / n, gx = a.grid[0] + (b.grid[0] - a.grid[0]) * t, gy = a.grid[1] + (b.grid[1] - a.grid[1]) * t, [x, z] = toWorld(gx, gy); return new THREE.Vector3(x, Math.max(heightAt(gx, gy), WATER_Y) + .12, z); }); }, [ak, bk, fromId, toId]); // eslint-disable-line react-hooks/exhaustive-deps
   return pts ? <Line points={pts} color="#ff7a1a" lineWidth={4} dashed dashSize={.12} gapSize={.07} renderOrder={6} /> : null;
 }
 const pinEls: Record<string, HTMLSpanElement | null> = {};
@@ -77,7 +81,7 @@ function Pins() {
   const points = useMapStore(s => s.points), query = useMapStore(s => s.query), category = useMapStore(s => s.category), selectedId = useMapStore(s => s.selectedId), select = useMapStore(s => s.select);
   const q = query.trim().toLowerCase();
   // Service pins are shown only when asked for (filter) or selected, to keep the 3D view readable.
-  const shown = useMemo(() => points.filter(p => (category === 'all' ? p.category !== 'facility' || p.id === selectedId : p.category === category) && (!q || [p.code, p.title.th, p.title.en, p.title.zh].some(s => s.toLowerCase().includes(q)))), [points, category, q, selectedId]);
+  const shown = useMemo(() => points.filter(p => inDiorama([p.x, p.y]) && (category === 'all' ? p.category !== 'facility' || p.id === selectedId : p.category === category) && (!q || [p.code, p.title.th, p.title.en, p.title.zh].some(s => s.toLowerCase().includes(q)))), [points, category, q, selectedId]);
   return <div className="pointer-events-none absolute inset-0 overflow-hidden">{shown.map(p => <span key={p.id} ref={el => { pinEls[p.id] = el; }} style={{ position: 'absolute', left: 0, top: 0, display: 'none', pointerEvents: 'auto' }}>
     <button type="button" title={p.title.en} className={`map-pin ${p.category} ${p.series ?? ''} ${selectedId === p.id ? 'selected' : ''} ${!p.verified ? 'unverified' : ''}`} onClick={() => select(p.id)}>{p.code}</button></span>)}</div>;
 }
@@ -85,19 +89,6 @@ function PinProjector() {
   const { camera, size } = useThree(), v = useMemo(() => new THREE.Vector3(), []);
   useFrame(() => { const pts = useMapStore.getState().points; for (const p of pts) { const el = pinEls[p.id]; if (!el) continue; const [x, z] = pointWorld(p); v.set(x, Math.max(heightAt(p.x, p.y), WATER_Y) + (p.category === 'landmark' ? p.height * METER * VEXAG + .35 : .55), z).project(camera); el.style.display = v.z > 1 ? 'none' : ''; el.style.transform = `translate(${(v.x * .5 + .5) * size.width}px,${(-v.y * .5 + .5) * size.height}px) translate(-50%,-50%)`; el.style.zIndex = String(Math.round((1 - v.z) * 1000)); } });
   return null;
-}
-/** Floating krathong on the ponds and rising sky lanterns (decorative ambience). */
-function Ambient() {
-  const time = useMapStore(s => s.time), kr = useRef<THREE.InstancedMesh>(null), lan = useRef<THREE.InstancedMesh>(null);
-  const floats = useMemo(() => { const r = mulberry32(88), out: { x: number; z: number; ph: number }[] = []; for (let t = 0; t < 6000 && out.length < 70; t++) { const gx = 150 + r() * 420, gy = 160 + r() * 280, i = pondAt([gx, gy]); if (i < 0) continue; if (ponds[i].islands.some(s => Math.hypot(gx - s.c[0], gy - s.c[1]) < s.r + 6)) continue; const [x, z] = toWorld(gx, gy); out.push({ x, z, ph: r() * 6.28 }); } return out; }, []);
-  const lans = useMemo(() => { const r = mulberry32(31); return Array.from({ length: 36 }, () => ({ x: (r() - .5) * 16, z: (r() - .5) * 10, y: r() * 6, v: .1 + r() * .12, s: .025 + r() * .02 })); }, []);
-  useFrame(s => { const t = s.clock.elapsedTime, o = new THREE.Object3D();
-    floats.forEach((f, i) => { o.position.set(f.x + Math.sin(t * .3 + f.ph) * .02, WATER_Y + .008 + Math.sin(t * 1.4 + f.ph) * .004, f.z + Math.cos(t * .25 + f.ph) * .02); o.rotation.set(0, f.ph + t * .1, 0); o.updateMatrix(); kr.current!.setMatrixAt(i, o.matrix); }); kr.current!.instanceMatrix.needsUpdate = true;
-    lans.forEach((l, i) => { const y = .6 + ((l.y + t * l.v) % 6); o.position.set(l.x + Math.sin(t * .2 + i) * .15, y, l.z); o.rotation.set(0, 0, 0); o.scale.setScalar(l.s / .03); o.updateMatrix(); lan.current!.setMatrixAt(i, o.matrix); o.scale.setScalar(1); }); lan.current!.instanceMatrix.needsUpdate = true; });
-  return <>
-    <instancedMesh ref={kr} args={[undefined, undefined, floats.length]} material={M.glow}><coneGeometry args={[.028, .022, 8]} /></instancedMesh>
-    <instancedMesh ref={lan} args={[undefined, undefined, lans.length]} material={M.lantern} visible={time !== 'day'} frustumCulled={false}><sphereGeometry args={[.03, 8, 6]} /></instancedMesh>
-  </>;
 }
 const [CX, CZ] = CENTER;
 const VIEWS = { overview: { pos: [CX + 9, 11, CZ + 13] as const, tgt: [CX, 0, CZ] as const }, iso: { pos: [CX + 9, 7, CZ + 5.5] as const, tgt: [CX, 0, CZ] as const }, top: { pos: [CX, 19, CZ + .01] as const, tgt: [CX, 0, CZ] as const } };
@@ -122,7 +113,7 @@ function CameraRig() {
 function World() {
   const points = useMapStore(s => s.points), selectedId = useMapStore(s => s.selectedId), movePoint = useMapStore(s => s.movePoint), editor = useMapStore(s => s.editor);
   return <>
-    <Atmosphere /><Terrain onPick={editor ? movePoint : undefined} /><Water /><Roads /><OsmGround /><Vegetation /><Scenery /><RouteLine /><Ambient />
+    <Atmosphere /><Terrain onPick={editor ? movePoint : undefined} /><Water /><Roads /><OsmGround /><Vegetation /><Scenery /><RouteLine /><Festive /><UserDot />
     {points.map(p => <PointModel key={p.id} p={p} selected={selectedId === p.id} />)}
     <PinProjector />
     <MapControls makeDefault target={[CX, 0, CZ]} enableDamping dampingFactor={.09} minDistance={1.5} maxDistance={30} minPolarAngle={.05} maxPolarAngle={1.42} screenSpacePanning={false} />

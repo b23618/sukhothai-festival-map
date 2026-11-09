@@ -32,3 +32,18 @@ export const festival = {
   lightSound: t('Light and Sound: บัตร 1,200 / 900 / 500 บาท · โทร 06-1242-8555', 'Light and Sound tickets 1,200 / 900 / 500 THB · tel 06-1242-8555', '光影声音秀票价 1,200 / 900 / 500 泰铢 · 电话 06-1242-8555'),
   note: t('ข้อมูลจากเว็บไซต์ทางการ ณ 9 พ.ย. 2569 (ผังงาน ณ 18 ก.ย.) อาจเปลี่ยนแปลง โปรดตรวจสอบกับ ททท./จังหวัดสุโขทัย', 'From the official site as of 9 Nov 2026 (plan as of 18 Sep); subject to change. Confirm with TAT / Sukhothai province.', '取自官网（2026年11月9日；场地图截至9月18日），可能有变动，请向泰国旅游局/素可泰府核实。'),
 };
+/** Getting-there info from https://sukhothailoykrathong.com/places (fetched 2026-11-09). Names are verbatim Thai; English/Chinese are translations. */
+export const places = {
+  source: { label: 'sukhothailoykrathong.com/places', url: 'https://sukhothailoykrathong.com/places' },
+  shuttle: t('รถคอกหมูรับ-ส่งฟรี จากที่จอดรถหลังร้านสินวนาและสนามบอลโรงเรียนลิไทฯ ทุก 20 นาที 16:00–24:00 ช่วงเทศกาล · จุดรับ-ส่งหลัก: ประตูทางเข้าอุทยานประวัติศาสตร์สุโขทัย', 'Free "Khok Mu" truck shuttle from the Sinwana-shop rear lot and the Likhai School football field, every 20 min, 16:00–24:00 during the festival · main drop-off: the Sukhothai Historical Park entrance gate', '免费“Khok Mu”接驳车：从Sinwana商店后停车场和Likhai学校足球场出发，节庆期间16:00–24:00每20分钟一班 · 主要上下车点：素可泰历史公园入口'),
+  hubs: [
+    t('สนามบินสุโขทัย — Bangkok Airways ราว 1 ชม. 20 นาทีจากสุวรรณภูมิ แล้วต่อรถอีกราว 41 กม.', 'Sukhothai Airport — Bangkok Airways, about 1 h 20 min from Suvarnabhumi, then about 41 km by road', '素可泰机场 — 曼谷航空，从素万那普约1小时20分钟，再乘车约41公里'),
+    t('สนามบินพิษณุโลก — จากดอนเมือง แล้วต่อรถอีกราว 80 กม.', 'Phitsanulok Airport — from Don Mueang, then about 80 km by road', '彭世洛机场 — 从廊曼出发，再乘车约80公里'),
+    t('หมอชิต 2 / สถานีขนส่งสุโขทัย — รถโดยสารหลายเที่ยวต่อวัน รถรับ-ส่งอุทยาน 06:00–18:00 ทุกวัน', 'Mo Chit 2 / Sukhothai Bus Terminal — several buses daily; park shuttle daily 06:00–18:00', '莫奇2站/素可泰客运站 — 每日多班大巴；公园接驳车每日06:00–18:00'),
+    t('สถานีรถไฟพิษณุโลก — สถานีที่ใกล้ที่สุด (สุโขทัยไม่มีสถานีรถไฟ)', 'Phitsanulok Railway Station — nearest station (Sukhothai has none)', '彭世洛火车站 — 最近的火车站（素可泰没有火车站）'),
+  ],
+  contacts: [
+    { label: t('ข้อมูลงาน/อุทยาน', 'Festival / park info', '活动/公园咨询'), tel: '055697310' }, { label: t('ตำรวจท่องเที่ยว', 'Tourist police', '旅游警察'), tel: '1155' }, { label: t('ศูนย์บริการนักท่องเที่ยว', 'Tourist service center', '游客服务中心'), tel: '1672' },
+    { label: t('การแพทย์ฉุกเฉิน', 'Medical emergency', '医疗急救'), tel: '1669' }, { label: t('แจ้งเหตุด่วน ตำรวจ', 'Police emergency', '警察报警'), tel: '191' }, { label: t('ดับเพลิง', 'Fire', '消防'), tel: '199' },
+  ],
+};

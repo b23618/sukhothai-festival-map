@@ -1,13 +1,15 @@
 'use client';
 import dynamic from 'next/dynamic';
 import {useEffect,useMemo,useState} from 'react';
-import {Search, MapPin, Landmark, CalendarDays, Wrench, Menu, X, Plus, Minus, Download, Navigation, Languages, Info, LocateFixed, Sun, Sunset, Moon, Box, ArrowDownToLine} from 'lucide-react';
+import {Search, MapPin, Landmark, CalendarDays, Wrench, Menu, X, Plus, Minus, Download, Navigation, Languages, Info, LocateFixed, Sun, Sunset, Moon, Box, ArrowDownToLine, Flame} from 'lucide-react';
 import {pointWorld,seriesLabel,type Category,type Point} from '@/data/points';
 import {useMapStore,type TimeOfDay} from '@/store/useMapStore';
 import PlaceMap from './PlaceMap';
 import RoutePanel from './RoutePanel';
+import Nearby from './Nearby';
+import GpsPanel from './GpsPanel';
 import {mapsOpenUrl} from '@/lib/googleMaps';
-import {festival} from '@/data/festival';
+import {festival,places} from '@/data/festival';
 const ThreeVenue=dynamic(()=>import('./ThreeVenue'),{ssr:false,loading:()=> <div className="loading">Loading 3D map…</div>});
 const translations={
  th:{brand:'สุโขทัย ลอยกระทง 2569',sub:'แผนที่ท่องเที่ยวแบบอินเทอร์แอคทีฟ',search:'ค้นหาวัด กิจกรรม หรือหมายเลข...',all:'ทั้งหมด',landmark:'โบราณสถาน',activity:'กิจกรรม',facility:'บริการ',explore:'สำรวจสถานที่',empty:'ไม่พบสถานที่',count:'จุดบนแผนที่',select:'เลือกหมุดเพื่อดูรายละเอียด',coordinates:'พิกัดบนภาพ',approx:'พิกัดหมุดเป็นค่าเริ่มต้น โปรดตรวจสอบก่อนเผยแพร่',editor:'โหมดแก้ไขพิกัด',editorHelp:'เลือกจุดจากรายการ แล้วคลิกบนแผนที่เพื่อย้ายหมุด',export:'ส่งออก JSON',original:'ดูภาพต้นฉบับ',location:'ค้นหาตำแหน่ง GPS',gpsNote:'ยังไม่รองรับการนำทางจริง ต้องตั้งค่าพิกัดภูมิศาสตร์และเครือข่ายเส้นทางก่อน',warning:'ชื่อกิจกรรมจากผังงานทางการ ส่วนเวลาและตำแหน่งยังรอยืนยันจากผู้จัดงาน',close:'ปิด',when:'เวลา',timeline:'กำหนดการสำคัญ',flame:'จุดพิธีรับไฟพระฤกษ์ (นอกอุทยานฯ)',history:'ประวัติและข้อมูล',hours:'เวลาเปิด',sources:'แหล่งข้อมูล',festival:'ข้อมูลงาน',dates:'วันที่จัดงาน',venue:'สถานที่',contact:'ติดต่อ',official:'เว็บไซต์ทางการ',acts:'กิจกรรมหลัก (จากเว็บไซต์ทางการ)',views:'มุมมอง',overview:'ภาพรวม',iso:'ไอโซเมตริก',top:'มุมบน',day:'กลางวัน',golden:'เย็น',night:'กลางคืน',zhPending:'ข้อความจีนรอตรวจ',world:'พิกัดโลก 3D',tags:'แท็ก',nearby:'บริการใกล้เคียง',visitor:'ข้อมูลผู้เยี่ยมชม',schedule:'เวลา: รอผู้จัดงานยืนยัน',facility_:'บริการ',note3d:'โมเดล 3 มิติเป็นภาพจำลองเชิงศิลป์ ไม่ใช่แบบสถาปัตยกรรมจริง',instructions:'ลากเพื่อเลื่อน • คลิกขวาหรือสองนิ้วเพื่อหมุน/เอียง • เลื่อนล้อเพื่อซูม'},
@@ -24,7 +26,6 @@ export default function FestivalExplorer(){
  useEffect(()=>{S.hydrate()},[]);// eslint-disable-line react-hooks/exhaustive-deps
  const filtered=useMemo(()=>points.filter(p=>(category==='all'||p.category===category)&&[p.code,p.title.th,p.title.en,p.title.zh].some(s=>s.toLowerCase().includes(query.trim().toLowerCase()))),[points,category,query]);
  const selected=points.find(p=>p.id===selectedId)||null;
- const nearby=useMemo(()=>selected?points.filter(p=>p.category==='facility'&&p.id!==selected.id).map(p=>({p,d:Math.hypot(p.x-selected.x,p.y-selected.y)})).sort((a,b)=>a.d-b.d).slice(0,3):[],[points,selected]);
  function downloadData(){const out=points.map(p=>({...p,world:pointWorld(p)}));const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});const href=URL.createObjectURL(blob);const a=document.createElement('a');a.href=href;a.download='sukhothai-map-points.json';a.click();URL.revokeObjectURL(href)}
  const categoryButtons=categories.map(c=>{const Icon=types[c];return <button key={c} className={`filter ${category===c?'on':''}`} onClick={()=>S.setCategory(c)}><Icon size={16}/>{ui[c]}</button>});
  return <main className="shell">
@@ -37,23 +38,24 @@ export default function FestivalExplorer(){
  <div className="sidebar-footer"><div className="editor-toggle"><span><Wrench size={15}/> {ui.editor}</span><input aria-label={ui.editor} type="checkbox" checked={editor} onChange={e=>S.setEditor(e.target.checked)}/></div>{editor&&<><p className="hint">{ui.editorHelp}</p><button className="export-btn" onClick={downloadData}><Download size={16}/>{ui.export}</button></>}</div>
  </aside>
  <section className="map-area"><ThreeVenue/>
- <div className="map-top"><span className="map-status"><span className="dot"/>{ui.sub}</span><button className="gps" onClick={()=>S.setGps(!gpsMessage)} title={ui.location}><LocateFixed size={18}/></button></div>
+ <div className="map-top"><span className="map-status"><span className="dot"/>{ui.sub}</span><button className="gps" onClick={()=>{if(S.locState==='off'||S.locState==='denied'||S.locState==='unsupported'){S.locate();S.setGps(true)}else S.setGps(!gpsMessage)}} title={ui.location}><LocateFixed size={18}/></button></div>
  <div className="map-controls"><button aria-label="Zoom in" onClick={()=>S.zoom(1)}><Plus size={21}/></button><button aria-label="Zoom out" onClick={()=>S.zoom(-1)}><Minus size={21}/></button></div>
  <div className="absolute left-5 top-[72px] flex flex-col gap-2 max-md:left-3 max-md:top-[58px]" aria-label={ui.views}>
   <div className="flex overflow-hidden rounded-xl bg-white shadow-md">{times.map(([k,Icon])=><button key={k} title={ui[k]} aria-label={ui[k]} onClick={()=>S.setTime(k)} className={`grid h-10 w-10 place-items-center border-0 ${time===k?'bg-[#176b53] text-white':'bg-white text-[#53625a]'}`}><Icon size={17}/></button>)}</div>
   <div className="flex overflow-hidden rounded-xl bg-white text-[11px] shadow-md"><button className="flex items-center gap-1 border-0 bg-white px-2.5 py-2.5" onClick={()=>S.setView('overview')}><Box size={14}/>{ui.overview}</button><button className="border-0 bg-white px-2.5 py-2.5" onClick={()=>S.setView('iso')}>{ui.iso}</button><button className="flex items-center gap-1 border-0 bg-white px-2.5 py-2.5" onClick={()=>S.setView('top')}><ArrowDownToLine size={14}/>{ui.top}</button></div>
  </div>
- <div className="map-instructions">{ui.instructions}</div>
+ <button className={`absolute left-5 top-[184px] flex items-center gap-1.5 rounded-xl border-0 px-2.5 py-2.5 text-[11px] shadow-md max-md:left-3 max-md:top-[170px] ${S.festive?'bg-[#ffb23a] text-[#4a2d00]':'bg-white text-[#53625a]'}`} title={{th:'สัญลักษณ์ลอยกระทง (ภาพประกอบ)',en:'Loy Krathong symbols (decorative)',zh:'水灯节符号（装饰）'}[lang]} onClick={()=>S.setFestive(!S.festive)}><Flame size={14}/>{{th:'ลอยกระทง',en:'Loy Krathong',zh:'水灯节'}[lang]}</button>
+ <div className="map-instructions">{ui.instructions}{S.festive&&<div className="mt-0.5 text-[9px] text-[#92691e]">{{th:'กระทง โคมลอย และไฟพิธีเป็นภาพประกอบ',en:'Krathong, lanterns and flame bowl are decorative',zh:'水灯、孔明灯和火盆仅为装饰'}[lang]}</div>}</div>
  <RoutePanel/>
- {gpsMessage&&<div className="gps-info"><button onClick={()=>S.setGps(false)} aria-label={ui.close}><X size={15}/></button>{ui.gpsNote}</div>}
+ <GpsPanel/>
  {editor&&<div className="editor-banner">✎ {ui.editorHelp}</div>}
  {selected?<article className="detail max-h-[70%] overflow-y-auto"><button className="detail-close" aria-label={ui.close} onClick={()=>S.select(null)}><X size={19}/></button><div className="eyebrow">{catLabel(ui,selected.category,lang,selected.series)} · {selected.code}</div><h3>{selected.title[lang]}</h3><div className="english-title">{selected.title.en}{selected.zhStatus==='pending'&&<span className="ml-2 rounded bg-[#eef3f8] px-1.5 py-0.5 text-[10px] text-[#47627f]">{ui.zhPending}</span>}</div><p>{selected.description[lang]}</p>
   {selected.history&&<p className="!mt-0 !text-[12px]"><b>{ui.history}:</b> {selected.history[lang]}</p>}{selected.hours&&<p className="!my-1 !text-[11px] text-[#7b857d]"><b>{ui.hours}:</b> {selected.hours[lang]}</p>}
   <div className="mb-2 flex flex-wrap gap-1.5">{selected.tags.map(tg=><span key={tg} className="rounded-full bg-[#f2f0e8] px-2 py-0.5 text-[10px] text-[#6c6a5a]">{tg}</span>)}</div>
   <div className="coord"><MapPin size={16}/>{ui.coordinates}: {selected.x}, {selected.y} · {ui.world}: {pointWorld(selected).map(v=>v.toFixed(2)).join(', ')}</div>
   <p className="!mb-1 !mt-3 !text-[11px] text-[#7b857d]">{ui.visitor}: {selected.visitorInfo?.[lang]}</p><p className="!my-1 !text-[11px] text-[#546258]">{selected.scheduleText?<><b>{ui.when}:</b> {selected.scheduleText[lang]}</>:ui.schedule}</p>
-  {selected.category!=='facility'&&nearby.length>0&&<div className="mt-2 text-[11px] text-[#546258]"><b>{ui.nearby}:</b> {nearby.map(n=>n.p.title[lang]).join(' · ')}</div>}
-  <div className="mt-3 flex flex-wrap gap-1.5">{([['start',{th:'ตั้งเป็นจุดเริ่มต้น',en:'Set as start',zh:'设为起点'},()=>S.setRoute(selected.id,undefined)],['end',{th:'ไปที่นี่',en:'Go here',zh:'前往此处'},()=>S.setRoute(undefined,selected.id)]] as const).map(([k,l,fn])=><button key={k} onClick={fn} className="inline-flex items-center gap-1.5 rounded-lg border border-[#176b53] bg-white px-2.5 py-1.5 text-[11px] text-[#176b53]"><Navigation size={13}/>{l[lang]}</button>)}</div>
+  <Nearby place={selected}/>
+  <div className="mt-3 flex flex-wrap gap-1.5">{([['me',{th:'เดินจากตำแหน่งฉัน',en:'Walk from my location',zh:'从我的位置步行'},()=>{S.locate();S.setRoute('me',selected.id)}],['start',{th:'ตั้งเป็นจุดเริ่มต้น',en:'Set as start',zh:'设为起点'},()=>S.setRoute(selected.id,undefined)],['end',{th:'ไปที่นี่',en:'Go here',zh:'前往此处'},()=>S.setRoute(undefined,selected.id)]] as const).map(([k,l,fn])=><button key={k} onClick={fn} className="inline-flex items-center gap-1.5 rounded-lg border border-[#176b53] bg-white px-2.5 py-1.5 text-[11px] text-[#176b53]"><Navigation size={13}/>{l[lang]}</button>)}</div>
   <PlaceMap geo={selected.geo} extra={selected.geoExtra} lang={lang}/>{selected.sources.length>0&&<div className="mt-2 text-[10px] text-[#8a9189]">{ui.sources}: {selected.sources.map((x,i)=><span key={x.url}>{i>0&&' · '}<a href={x.url} target="_blank" rel="noreferrer" className="underline">{x.label}</a></span>)}</div>}
   {!selected.verified&&<div className="verification"><Info size={16}/>{ui.warning}</div>}<div className="mt-2 text-[10px] text-[#9a9384]">{ui.note3d}</div></article>:<div className="map-tip"><Navigation size={17}/>{ui.select}</div>}
  </section></div><footer className="footer-note">{ui.approx} · {ui.warning}</footer>
@@ -61,6 +63,7 @@ export default function FestivalExplorer(){
   <dl className="mt-3 space-y-1.5 text-[13px]"><div><b>{ui.dates}:</b> {festival.datesText[lang]}</div><div className="text-[12px] text-[#546258]">{festival.loyKrathongDay[lang]}</div><div><b>{ui.venue}:</b> {festival.venue[lang]}</div><div><b>{ui.contact}:</b> <a href={`tel:${festival.phone.replace(/-/g,'')}`}>{festival.phone}</a> · <a href={festival.site} target="_blank" rel="noreferrer" className="underline">{ui.official}</a></div></dl>
   <h3 className="mb-1 mt-4 text-[13px]">{ui.acts}</h3><ul className="m-0 list-disc pl-5 text-[12px] leading-6">{festival.activities.map((a,i)=><li key={i}>{a[lang]}</li>)}</ul>
   <h3 className="mb-1 mt-4 text-[13px]">{ui.timeline}</h3><ul className="m-0 list-none space-y-1.5 p-0 text-[12px] leading-5">{festival.timeline.map((e,i)=><li key={i}><b>{e.date[lang]}</b> — {e.text[lang]}</li>)}</ul><div className="mt-2 text-[11px]"><a className="underline" target="_blank" rel="noreferrer" href={mapsOpenUrl(festival.flameCeremony,lang)}>{ui.flame}</a> · {festival.lightSound[lang]}</div>
+  <h3 className="mb-1 mt-4 text-[13px]">{{th:'การเดินทางและที่จอดรถ',en:'Getting there & parking',zh:'交通与停车'}[lang]}</h3><div className="text-[12px] leading-5"><p className="m-0">{places.shuttle[lang]}</p><ul className="m-0 mt-1 list-disc pl-5">{places.hubs.map((h,i)=><li key={i}>{h[lang]}</li>)}</ul><div className="mt-1.5 flex flex-wrap gap-1.5">{places.contacts.map((c,i)=><a key={i} href={`tel:${c.tel}`} className="rounded-full border border-[#e3e3da] bg-[#fafaf6] px-2 py-0.5 text-[11px] no-underline">{c.label[lang]} {c.tel}</a>)}</div><a className="mt-1 inline-block text-[10px] underline" href={places.source.url} target="_blank" rel="noreferrer">{places.source.label}</a></div>
   <p className="rounded-lg bg-[#fff4dc] p-2 text-[11px] text-[#92691e]">{festival.note[lang]}</p>
   <PlaceMap geo={festival.center} lang={lang} zoom={16}/></div></div>}
  </main>;

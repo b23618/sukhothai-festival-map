@@ -84,4 +84,14 @@ export const facilityPoints: Point[] = [
   fac('gate-w', '⇥', 'gate', null, [36, 268], 'ทางเข้าด้านตะวันตก', 'West entrance', '西入口', ['entrance']),
   fac('gate-e', '⇤', 'gate', null, [562, 346], 'ทางเข้าด้านตะวันออก', 'East entrance', '东入口', ['entrance']),
 ];
-export const allInitialPoints: Point[] = [...initialPoints, ...activityPoints, ...facilityPoints];
+const placesSrc = { label: 'sukhothailoykrathong.com/places', url: 'https://sukhothailoykrathong.com/places' };
+const pk = (id: string, ll: [number, number], cars: number, shuttle: boolean, th: string, en: string, zh: string): Point => ({ ...base, id: `place-${id}`, code: 'P', category: 'facility', ...(() => { const [x, y] = geoToGrid(...ll); return { x, y }; })(), verified: true, status: 'name-verified', model: 'parking', height: .25, focusDistance: 2.6, tags: ['places', 'parking', ...(shuttle ? ['shuttle'] : [])],
+  title: t(th, en, zh), description: t(`ที่จอดรถ ${cars} คัน${shuttle ? ' · มีรถรับ-ส่งฟรีไปยังงาน' : ''}`, `Parking for ${cars} cars${shuttle ? ' · free shuttle to the festival' : ''}`, `停车场，${cars}个车位${shuttle ? ' · 提供免费接驳车前往活动' : ''}`), sources: [placesSrc], geo: { lat: ll[0], lng: ll[1] } });
+/** Parking areas listed on the official "places" page (some lie outside the diorama; they stay searchable and routable). */
+export const placeParking: Point[] = [
+  pk('tpt', [17.017262, 99.710125], 300, false, 'ที่จอดรถ วัดตระพังทอง', 'Parking: Wat Traphang Thong', '停车场：达潘通寺'), pk('tapha', [17.021748, 99.703561], 300, false, 'ที่จอดรถ ศาลตาผาแดง', 'Parking: San Ta Pha Daeng', '停车场：达帕丹神庙'),
+  pk('sorasak', [17.0225278, 99.7044722], 300, false, 'ที่จอดรถ วัดสรศักดิ์', 'Parking: Wat Sorasak', '停车场：素拉萨寺'), pk('oldmuni', [17.0186996, 99.7145933], 50, false, 'ที่จอดรถ เทศบาลเมืองเก่า', 'Parking: Old Municipality Building', '停车场：旧市政厅'),
+  pk('sinwana', [17.017337, 99.714615], 300, true, 'ที่จอดรถ หลังร้านสินวนา', 'Parking: behind Sinwana shop', '停车场：Sinwana商店后'), pk('likhai', [17.028948, 99.704437], 500, true, 'ที่จอดรถ สนามบอล โรงเรียนลิไทฯ', 'Parking: Likhai School football field', '停车场：Likhai学校足球场'),
+  pk('parkshop', [17.013113, 99.704941], 300, false, 'ที่จอดรถ ร้านค้าอุทยาน', 'Parking: Park shop area', '停车场：公园商店区'),
+];
+export const allInitialPoints: Point[] = [...initialPoints, ...activityPoints, ...facilityPoints, ...placeParking];

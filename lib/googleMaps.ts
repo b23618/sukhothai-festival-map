@@ -9,8 +9,8 @@ export const mapsOpenUrl = (g: Geo, lang: Language) => `https://www.google.com/m
 export const mapsDirectionsUrl = (g: Geo, lang: Language) => `https://www.google.com/maps/dir/?api=1&destination=${ll(g)}&travelmode=walking&hl=${GOOGLE_HL[lang]}`;
 /** Keyless embeddable map for an <iframe>. */
 export const mapsEmbedUrl = (g: Geo, lang: Language, zoom = 18) => `https://maps.google.com/maps?q=${ll(g)}&z=${zoom}&hl=${GOOGLE_HL[lang]}&output=embed`;
-/** Directions between two places (origin -> destination). `mode` is a Google travelmode. */
-export const mapsRouteUrl = (from: Geo, to: Geo, lang: Language, mode: 'walking' | 'driving' | 'transit' = 'walking') => `https://www.google.com/maps/dir/?api=1&origin=${ll(from)}&destination=${ll(to)}&travelmode=${mode}&hl=${GOOGLE_HL[lang]}`;
+/** Walking directions between two places (origin -> destination). The app only offers walking routes. */
+export const mapsRouteUrl = (from: Geo, to: Geo, lang: Language) => `https://www.google.com/maps/dir/?api=1&origin=${ll(from)}&destination=${ll(to)}&travelmode=walking&hl=${GOOGLE_HL[lang]}`;
 /** Great-circle distance in metres. */
 export const haversineM = (a: Geo, b: Geo) => { const r = Math.PI / 180, dLat = (b.lat - a.lat) * r, dLng = (b.lng - a.lng) * r, h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLng / 2) ** 2; return 12742000 * Math.asin(Math.sqrt(h)); };
 /** Initial compass bearing (0 = north, clockwise) in degrees. */
