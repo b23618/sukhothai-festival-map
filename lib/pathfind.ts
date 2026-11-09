@@ -23,8 +23,16 @@ function graph(): Graph {
 }
 const nearest = (g: Graph, p: Pt) => { let bi = -1, bd = Infinity; g.nodes.forEach((n, i) => { const d = dist(n, p); if (d < bd) { bd = d; bi = i; } }); return { i: bi, d: bd }; };
 /** Walking route in grid coords along roads/paths; falls back to a straight line when no connected route exists. */
-export function walkRoute(a: Pt, b: Pt): { pts: Pt[]; onPaths: boolean } {
-  const straight = { pts: [a, b], onPaths: false }, g = graph();
+export interface WalkRoute { pts: Pt[]; onPaths: boolean; metres: number }
+const M_PER_CELL = 2.64, memo = new Map<string, WalkRoute>();
+const lenM = (pts: Pt[]) => pts.reduce((s, q, i) => i ? s + dist(pts[i - 1], q) : 0, 0) * M_PER_CELL;
+export function walkRoute(a: Pt, b: Pt): WalkRoute {
+  const key = `${a}|${b}`; let r = memo.get(key);
+  if (!r) { r = compute(a, b); if (memo.size > 50) memo.clear(); memo.set(key, r); }
+  return r;
+}
+function compute(a: Pt, b: Pt): WalkRoute {
+  const straight = { pts: [a, b], onPaths: false, metres: lenM([a, b]) }, g = graph();
   if (!g.nodes.length) return straight;
   const s = nearest(g, a), e = nearest(g, b);
   if (s.d > MAX_STUB || e.d > MAX_STUB) return straight;
@@ -39,5 +47,5 @@ export function walkRoute(a: Pt, b: Pt): { pts: Pt[]; onPaths: boolean } {
   if (D[e.i] === Infinity) return straight;
   const path: Pt[] = []; for (let i = e.i; i >= 0; i = P[i]) path.push(g.nodes[i]);
   path.reverse();
-  return { pts: [a, ...path, b], onPaths: true };
+  const pts = [a, ...path, b]; return { pts, onPaths: true, metres: lenM(pts) };
 }

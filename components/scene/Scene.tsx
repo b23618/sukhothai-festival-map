@@ -109,6 +109,14 @@ function CameraRig() {
   useEffect(() => { if (!c) return; const stop = () => { goal.current = null; }; c.addEventListener('start', stop); return () => c.removeEventListener('start', stop); }, [c]);
   useEffect(() => { if (!viewReq) return; const v = VIEWS[viewReq.name]; goal.current = { t: new THREE.Vector3(...v.tgt), p: new THREE.Vector3(...v.pos), d: null }; }, [viewReq]);
   useEffect(() => { if (!selectedId) return; const p = points.find(q => q.id === selectedId); if (!p) return; const [x, z] = pointWorld(p); goal.current = { t: new THREE.Vector3(x, heightAt(p.x, p.y) + p.height * METER * VEXAG * .35 - p.focusDistance * .09, z), p: null, d: p.focusDistance * 2 }; }, [selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const routeFrom = useMapStore(s => s.routeFrom), routeTo = useMapStore(s => s.routeTo), userPos = useMapStore(s => s.userPos);
+  useEffect(() => {
+    if (!routeFrom || !routeTo || routeFrom === routeTo) return;
+    const a = endpoint(routeFrom, points, userPos), b = endpoint(routeTo, points, userPos); if (!a || !b) return;
+    const ws = walkRoute(a.grid, b.grid).pts.map(([gx, gy]) => toWorld(gx, gy)), xs = ws.map(w => w[0]), zs = ws.map(w => w[1]);
+    const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
+    goal.current = { t: new THREE.Vector3((x0 + x1) / 2, 0, (z0 + z1) / 2), p: null, d: THREE.MathUtils.clamp(Math.max(x1 - x0, z1 - z0) * 1.5 + 3, 4, 30) };
+  }, [routeFrom, routeTo, !!userPos]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!c || !zoomReq) return; const off = camera.position.clone().sub(c.target); off.setLength(THREE.MathUtils.clamp(off.length() * (zoomReq > 0 ? 1 / 1.35 : 1.35), c.minDistance, c.maxDistance)); camera.position.copy(c.target).add(off); c.update(); }, [zoomReq]); // eslint-disable-line react-hooks/exhaustive-deps
   useFrame((_, dt) => {
     if (!c) return; const g = goal.current, k = 1 - Math.exp(-5 * dt);

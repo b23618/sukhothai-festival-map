@@ -1,14 +1,15 @@
 'use client';
 import { ArrowLeft, ArrowUpDown, Clock, ExternalLink, Footprints, LocateFixed, Ruler, TriangleAlert, X } from 'lucide-react';
 import { mapsRouteUrl } from '@/lib/googleMaps';
+import { walkRoute } from '@/lib/pathfind';
 import { ME, WALK_LIMIT_M, endpoint, fmtDist, walkInfo } from '@/lib/route';
 import { useMapStore } from '@/store/useMapStore';
 import type { Language } from '@/data/points';
 
 export const L = {
-  th: { title: 'เส้นทางเดิน', from: 'จุดเริ่มต้น', to: 'ปลายทาง', pick: 'เลือกสถานที่…', me: 'ตำแหน่งของฉัน', waitGps: 'กำลังหาตำแหน่ง GPS…', swap: 'สลับ', close: 'ปิด', dist: 'ระยะทางตรง', walk: 'เดินประมาณ', dir: 'ทิศทาง', gm: 'นำทางเดินใน Google Maps', far: 'ไกลเกิน 5 กม. ไม่เหมาะกับการเดิน', same: 'เลือกสองจุดที่ต่างกัน', m: 'ม.', km: 'กม.', min: 'นาที', groups: { landmark: 'โบราณสถาน', activity: 'กิจกรรม', facility: 'บริการ' }, c: ['เหนือ', 'ตะวันออกเฉียงเหนือ', 'ตะวันออก', 'ตะวันออกเฉียงใต้', 'ใต้', 'ตะวันตกเฉียงใต้', 'ตะวันตก', 'ตะวันตกเฉียงเหนือ'], head: 'มุ่งหน้า' },
-  en: { title: 'Walking route', from: 'From', to: 'To', pick: 'Choose a place…', me: 'My location', waitGps: 'Finding GPS position…', swap: 'Swap', close: 'Close', dist: 'Straight-line', walk: 'Walk about', dir: 'Heading', gm: 'Walking directions in Google Maps', far: 'Over 5 km: too far to walk', same: 'Pick two different places', m: 'm', km: 'km', min: 'min', groups: { landmark: 'Heritage', activity: 'Activities', facility: 'Services' }, c: ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'], head: 'Head' },
-  zh: { title: '步行路线', from: '起点', to: '终点', pick: '选择地点…', me: '我的位置', waitGps: '正在获取GPS位置…', swap: '互换', close: '关闭', dist: '直线距离', walk: '步行约', dir: '方向', gm: '在谷歌地图查看步行路线', far: '超过5公里，不适合步行', same: '请选择两个不同地点', m: '米', km: '公里', min: '分钟', groups: { landmark: '古迹', activity: '活动', facility: '服务' }, c: ['北', '东北', '东', '东南', '南', '西南', '西', '西北'], head: '前往' },
+  th: { title: 'เส้นทางเดิน', from: 'จุดเริ่มต้น', to: 'ปลายทาง', pick: 'เลือกสถานที่…', me: 'ตำแหน่งของฉัน', waitGps: 'กำลังหาตำแหน่ง GPS…', swap: 'สลับ', close: 'ปิด', dist: 'ระยะทาง', walk: 'เดินประมาณ', dir: 'ทิศทาง', gm: 'นำทางเดินใน Google Maps', far: 'ไกลเกิน 5 กม. ไม่เหมาะกับการเดิน', same: 'เลือกสองจุดที่ต่างกัน', m: 'ม.', km: 'กม.', min: 'นาที', groups: { landmark: 'โบราณสถาน', activity: 'กิจกรรม', facility: 'บริการ' }, c: ['เหนือ', 'ตะวันออกเฉียงเหนือ', 'ตะวันออก', 'ตะวันออกเฉียงใต้', 'ใต้', 'ตะวันตกเฉียงใต้', 'ตะวันตก', 'ตะวันตกเฉียงเหนือ'], head: 'มุ่งหน้า' },
+  en: { title: 'Walking route', from: 'From', to: 'To', pick: 'Choose a place…', me: 'My location', waitGps: 'Finding GPS position…', swap: 'Swap', close: 'Close', dist: 'Distance', walk: 'Walk about', dir: 'Heading', gm: 'Walking directions in Google Maps', far: 'Over 5 km: too far to walk', same: 'Pick two different places', m: 'm', km: 'km', min: 'min', groups: { landmark: 'Heritage', activity: 'Activities', facility: 'Services' }, c: ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'], head: 'Head' },
+  zh: { title: '步行路线', from: '起点', to: '终点', pick: '选择地点…', me: '我的位置', waitGps: '正在获取GPS位置…', swap: '互换', close: '关闭', dist: '距离', walk: '步行约', dir: '方向', gm: '在谷歌地图查看步行路线', far: '超过5公里，不适合步行', same: '请选择两个不同地点', m: '米', km: '公里', min: '分钟', groups: { landmark: '古迹', activity: '活动', facility: '服务' }, c: ['北', '东北', '东', '东南', '南', '西南', '西', '西北'], head: '前往' },
 } satisfies Record<Language, unknown>;
 const routeHint = {
   th: { back: 'กลับไปดูสถานที่' },
@@ -19,7 +20,7 @@ export const compass = (lang: Language, brg: number) => L[lang].c[Math.round(brg
 export default function RoutePanel() {
   const { lang, points, routeFrom, routeTo, selectedId, userPos, locState, setRoute, clearRoute, locate } = useMapStore(), s = L[lang];
   if (!routeFrom && !routeTo) return null;
-  const a = endpoint(routeFrom, points, userPos), b = endpoint(routeTo, points, userPos), same = routeFrom === routeTo, info = a && b && !same ? walkInfo(a.geo, b.geo) : null;
+  const a = endpoint(routeFrom, points, userPos), b = endpoint(routeTo, points, userPos), same = routeFrom === routeTo, info = a && b && !same ? (() => { const w = walkInfo(a.geo, b.geo), r = walkRoute(a.grid, b.grid); return r.onPaths ? { ...w, d: r.metres, walkMin: Math.max(1, Math.round(r.metres / 75)) } : w; })() : null;
   const opts = (['landmark', 'activity', 'facility'] as const).map(c => <optgroup key={c} label={s.groups[c]}>{points.filter(p => p.category === c).map(p => <option key={p.id} value={p.id}>{p.code} · {p.title[lang]}</option>)}</optgroup>);
   const me = <option value={ME}>📍 {s.me}</option>;
   const sel = 'min-h-11 w-full rounded-lg border border-[#dddeda] bg-[#fafaf8] px-2 py-1.5 text-[12px]', btn = 'inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-[#e3e3da] bg-[#fafaf6] px-2.5 py-1.5 text-[11px] text-[#2f4a3e] no-underline hover:bg-[#f0f4ec]';
