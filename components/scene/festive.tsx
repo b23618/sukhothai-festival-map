@@ -152,7 +152,7 @@ function TitleFireworks() {
 const glowTex = (() => { if (typeof document === 'undefined') return null; const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d')!, g = x.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, 'rgba(255,255,255,.95)'); g.addColorStop(.3, 'rgba(255,255,255,.5)'); g.addColorStop(.7, 'rgba(255,255,255,.12)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
 const beamTex = (() => { if (typeof document === 'undefined') return null; const c = document.createElement('canvas'); c.width = 4; c.height = 128; const x = c.getContext('2d')!, g = x.createLinearGradient(0, 128, 0, 0); g.addColorStop(0, 'rgba(255,255,255,.85)'); g.addColorStop(.5, 'rgba(255,255,255,.25)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 4, 128); return new THREE.CanvasTexture(c); })();
 function glowSpec(p: Point) {
-  if (p.category === 'landmark') return { col: '#ffb347', r: .8, h: 2.4 };
+  if (p.category === 'landmark') return { col: '#ffb347', r: LOW ? 1.1 : .9, h: 2.4 };
   if (p.category === 'activity') return p.series === 'culture' ? { col: '#a46bff', r: .3, h: 1.1 } : { col: '#ff5fa2', r: .3, h: 1.1 };
   if (p.tags.includes('road')) return { col: '#4da3ff', r: .35, h: .9 };
   if (p.model === 'wc') return { col: '#3fd2c7', r: .3, h: .7 };
@@ -169,7 +169,7 @@ function PlaceGlow() {
       m.compose(new THREE.Vector3(x, y + .04, z), q, new THREE.Vector3(r * 2, r * 2, 1)); d.setMatrixAt(i, m); d.setColorAt(i, c.set(col));
       m.compose(new THREE.Vector3(x, y + h / 2, z), q, new THREE.Vector3(r * .55, h, r * .55)); b.setMatrixAt(i, m); b.setColorAt(i, c.set(col)); });
     d.count = b.count = list.length; d.instanceMatrix.needsUpdate = b.instanceMatrix.needsUpdate = true; if (d.instanceColor) d.instanceColor.needsUpdate = true; if (b.instanceColor) b.instanceColor.needsUpdate = true; }, [list]);
-  useFrame(st => { const k = .8 + .2 * Math.sin(st.clock.elapsedTime * 1.6); if (dm.current) dm.current.opacity = .12 * k; if (bm.current) bm.current.opacity = .1 * k; });
+  useFrame(st => { const k = .8 + .2 * Math.sin(st.clock.elapsedTime * 1.6); if (dm.current) dm.current.opacity = (LOW ? .32 : .16) * k; if (bm.current) bm.current.opacity = (LOW ? .22 : .12) * k; });
   const n = Math.max(list.length, 1);
   return <>
     <instancedMesh ref={disc} args={[undefined, undefined, n]} frustumCulled={false} renderOrder={3}><planeGeometry args={[1, 1]} onUpdate={g => g.rotateX(-Math.PI / 2)} /><meshBasicMaterial ref={dm} map={glowTex} transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} /></instancedMesh>

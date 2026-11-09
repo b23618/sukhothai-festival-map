@@ -23,7 +23,7 @@ import { Facility, Festival } from './structures';
 const LOOK: Record<TimeOfDay, { sun: string; sunI: number; sunPos: [number, number, number]; hemiSky: string; hemiGround: string; hemiI: number; top: string; hor: string; glow: number }> = {
   day: { sun: '#fff4dc', sunI: 2.4, sunPos: [8, 14, 6], hemiSky: '#d6ecff', hemiGround: '#a99a66', hemiI: 1, top: '#6fb3ea', hor: '#f4ead2', glow: .05 },
   golden: { sun: '#ffb869', sunI: 2.7, sunPos: [-11, 6, 8], hemiSky: '#f6d9b0', hemiGround: '#9a7a4e', hemiI: .85, top: '#79a6d6', hor: '#ffc88a', glow: .35 },
-  night: { sun: '#8fa8ff', sunI: .45, sunPos: [-6, 10, -5], hemiSky: '#4a62c8', hemiGround: '#1c2040', hemiI: .65, top: '#050c4a', hor: '#243c9c', glow: .8 },
+  night: { sun: '#8fa8ff', sunI: .45, sunPos: [-6, 10, -5], hemiSky: '#4a62c8', hemiGround: '#1c2040', hemiI: LOW ? .95 : .7, top: '#050c4a', hor: '#243c9c', glow: LOW ? 1.4 : 1.0 },
 };
 const skyVert = `varying vec3 vP; void main(){ vP=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`;
 const skyFrag = `uniform vec3 uTop; uniform vec3 uHor; varying vec3 vP; void main(){ float h=clamp(normalize(vP).y*1.6+.1,0.,1.); gl_FragColor=vec4(mix(uHor,uTop,pow(h,.7)),1.); }`;
