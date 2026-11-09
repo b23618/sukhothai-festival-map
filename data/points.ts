@@ -43,7 +43,7 @@ export interface Point {
 }
 export const pointWorld = (p: Pick<Point, 'x' | 'y'>) => toWorld(p.x, p.y);
 const t = (th: string, en: string, zh: string): Localized => ({ th, en, zh });
-const pendingInfo = t('ข้อมูลผู้เยี่ยมชมรอการยืนยันจากผู้จัดงาน', 'Visitor information pending organizer confirmation', '游客信息待主办方确认');
+const pendingInfo = t('-', '-', '-');
 const base = { zhStatus: 'pending' as const, scale: 1, schedule: null, visitorInfo: pendingInfo, history: null, hours: null, scheduleText: null as Localized | null, sources: [] as { label: string; url: string }[] };
 const osm = (lat: number, lng: number) => ({ label: 'OpenStreetMap', url: `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=18/${lat}/${lng}` });
 const thwiki = (title: string, name: string) => ({ label: `Wikipedia (th): ${name}`, url: `https://th.wikipedia.org/wiki/${encodeURIComponent(title)}` });
