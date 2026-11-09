@@ -18,7 +18,7 @@ const sites: Pt[] = allInitialPoints.map(p => [p.x, p.y]);
 const g2 = (x: number, z: number): Pt => [(x / WORLD_W + .5) * 1000, (z / WORLD_H + .5) * 705];
 
 /** Continuous terrain with vertex-coloured zones, pond basins, island mounds and a soil "diorama" skirt. */
-export function Terrain({ onPick }: { onPick?: (x: number, y: number) => void }) {
+export function Terrain() {
   const { top, skirt } = useMemo(() => {
     const nx = 360, nz = 340, pos: number[] = [], col: number[] = [], idx: number[] = [], hs: number[][] = [];
     for (let j = 0; j <= nz; j++) { hs.push([]); for (let i = 0; i <= nx; i++) {
@@ -35,7 +35,7 @@ export function Terrain({ onPick }: { onPick?: (x: number, y: number) => void })
     return { top: t, skirt: s };
   }, []);
   return <group>
-    <mesh geometry={top} receiveShadow onClick={e => { if (!onPick) return; const [gx, gy] = g2(e.point.x, e.point.z); onPick(Math.round(gx), Math.round(gy)); }}><meshStandardMaterial vertexColors roughness={1} flatShading={false} /></mesh>
+    <mesh geometry={top} receiveShadow><meshStandardMaterial vertexColors roughness={1} flatShading={false} /></mesh>
     <mesh geometry={skirt} material={M.earth} /><mesh position={[CENTER[0], SKIRT, CENTER[1]]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[TW, TH]} /><meshBasicMaterial color="#1c140d" /></mesh>
   </group>;
 }

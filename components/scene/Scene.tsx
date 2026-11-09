@@ -48,16 +48,16 @@ const HERITAGE = new Set(['wat-mahathat', 'wat-chana', 'noen-prasat', 'wat-mai',
 const FESTIVAL = new Set(['stage', 'tent', 'pavilion', 'platform', 'food', 'rest', 'arch', 'floating-pier']);
 function PointModel({ p, selected }: { p: Point; selected: boolean }) {
   if (!inDiorama([p.x, p.y])) return null;
-  const select = useMapStore(s => s.select), editor = useMapStore(s => s.editor);
+  const select = useMapStore(s => s.select);
   const [x, z] = pointWorld(p), ground = heightAt(p.x, p.y), inWater = p.category === 'activity' && pondAt([p.x, p.y]) >= 0;
   const model = inWater && FESTIVAL.has(p.model) ? 'floating-pier' : p.model, y = model === 'floating-pier' ? WATER_Y + .035 : Math.max(ground, WATER_Y + .01);
   const rot = p.category === 'landmark' ? 0 : (hashString(p.id) % 12) * Math.PI / 6;
-  if (HERITAGE.has(model)) return <group onClick={e => { if (editor) return; e.stopPropagation(); select(p.id); }} onPointerOver={() => { if (!editor) document.body.style.cursor = 'pointer'; }} onPointerOut={() => { document.body.style.cursor = ''; }}>
+  if (HERITAGE.has(model)) return <group onClick={e => { e.stopPropagation(); select(p.id); }} onPointerOver={() => { document.body.style.cursor = 'pointer'; }} onPointerOut={() => { document.body.style.cursor = ''; }}>
     <ModelSlot glb={p.glb} scale={1}><HeritageAt model={model} gx={p.x} gy={p.y} /></ModelSlot>
     {selected && <group position={[x, y, z]}><SelectionRing r={.62} /></group>}
   </group>;
   return <group position={[x, y, z]} rotation={[0, rot, 0]} scale={p.scale}
-    onClick={e => { if (editor) return; e.stopPropagation(); select(p.id); }} onPointerOver={() => { if (!editor) document.body.style.cursor = 'pointer'; }} onPointerOut={() => { document.body.style.cursor = ''; }}>
+    onClick={e => { e.stopPropagation(); select(p.id); }} onPointerOver={() => { document.body.style.cursor = 'pointer'; }} onPointerOut={() => { document.body.style.cursor = ''; }}>
     <ModelSlot glb={p.glb} scale={1}>
       {FESTIVAL.has(model) ? <Festival kind={model} /> : <Facility kind={model} />}
       {p.symbol && <Emblem kind={p.symbol} lift={p.category === 'facility' ? .16 : .26} />}
@@ -113,9 +113,9 @@ function CameraRig() {
   return null;
 }
 function World() {
-  const points = useMapStore(s => s.points), selectedId = useMapStore(s => s.selectedId), movePoint = useMapStore(s => s.movePoint), editor = useMapStore(s => s.editor);
+  const points = useMapStore(s => s.points), selectedId = useMapStore(s => s.selectedId);
   return <>
-    <Atmosphere /><Terrain onPick={editor ? movePoint : undefined} /><Water /><Roads /><OsmGround /><Vegetation /><Scenery /><RouteLine /><Festive /><UserDot />
+    <Atmosphere /><Terrain /><Water /><Roads /><OsmGround /><Vegetation /><Scenery /><RouteLine /><Festive /><UserDot />
     {points.map(p => <PointModel key={p.id} p={p} selected={selectedId === p.id} />)}
     <PinProjector />
     <MapControls makeDefault target={[CX, 0, CZ]} enableDamping dampingFactor={.09} minDistance={1.5} maxDistance={46} minPolarAngle={.05} maxPolarAngle={1.42} screenSpacePanning={false} />
