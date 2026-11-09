@@ -7,10 +7,8 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "cf:build": "opennextjs-cloudflare build",
-    "cf:deploy": "opennextjs-cloudflare deploy",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
+    "preview": "wrangler pages dev out",
+    "deploy": "npm run build && wrangler pages deploy out"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.0",
@@ -26,7 +24,6 @@
     "zustand": "^5.1.0"
   },
   "devDependencies": {
-    "@opennextjs/cloudflare": "^1.20.16",
     "@types/node": "^22.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",

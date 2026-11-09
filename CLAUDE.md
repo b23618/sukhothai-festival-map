@@ -16,7 +16,7 @@ No test runner or linter is configured. Requires Node.js 20.9+. `typecheck` is t
 
 ## Architecture
 
-Single-page Next.js 15 (App Router) + React 19 + Tailwind v4 (utilities only, no preflight; legacy CSS stays in `app/globals.css`) app: a fully procedural 3D diorama of the Sukhothai Loy Krathong festival 2569 (2026) venue. UI is trilingual (th / en / zh); Thai is default. Deployed to Cloudflare via OpenNext (`next.config.mjs`, `open-next.config.ts`, `wrangler.jsonc`; `npm run deploy`).
+Single-page Next.js 15 (App Router) + React 19 + Tailwind v4 (utilities only, no preflight; legacy CSS stays in `app/globals.css`) app: a fully procedural 3D diorama of the Sukhothai Loy Krathong festival 2569 (2026) venue. UI is trilingual (th / en / zh); Thai is default. Deployed to Cloudflare **Pages** as a static export (`output: 'export'` in `next.config.mjs`, output dir `out`, `wrangler.jsonc` has `pages_build_output_dir`). Pages settings: build command `npm run build`, output `out`. No server features may be added (no route handlers/SSR) without moving to Workers + OpenNext. `npm run deploy` = build + `wrangler pages deploy out`.
 
 **Hard rule: the official venue PNG must never be used as a texture/background in the scene.** It lives in `reference/` (outside `public/`) for analysis only.
 
