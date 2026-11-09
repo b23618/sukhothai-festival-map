@@ -74,7 +74,7 @@ export const activityPoints: Point[] = [...mkActs(festivalRows, 'festival'), ...
 const fac = (id: string, code: string, model: ModelType, ll: [number, number] | null, fallback: [number, number], th: string, en: string, zh: string, tags: string[]): Point => {
   const [x, y] = ll ? geoToGrid(...ll) : fallback;
   return { ...base, id: `facility-${id}`, code, category: 'facility', x, y, verified: !!ll, status: ll ? 'name-verified' : 'generic', model, height: .25, focusDistance: 2.6, tags, title: t(th, en, zh),
-    description: ll ? t('ตำแหน่งตามพิกัดทางการของงาน (เว็บไซต์ทางการ)', 'Position from the official event GPS list', '位置取自官方活动GPS清单') : t('ตำแหน่งโดยประมาณจากผังงาน รอยืนยัน', 'Approximate position from the venue plan; to be confirmed', '位置取自场地图的大致位置，待确认'),
+    description: ll ? t('ตำแหน่งตามพิกัดทางการของงาน (เว็บไซต์ทางการ)', 'Position from the official event GPS list', '位置取自官方活动GPS清单') : t('-', '-', '-'),
     sources: ll ? [official] : [], ...(ll ? { geo: { lat: ll[0], lng: ll[1] } } : {}) };
 };
 const list = (id: string, code: string, model: ModelType, pts: [number, number][], th: string, en: string, zh: string, tags: string[]) => pts.map((p, i) => fac(`${id}${i + 1}`, code, model, p, [0, 0], `${th} ${i + 1}`, `${en} ${i + 1}`, `${zh} ${i + 1}`, tags));
