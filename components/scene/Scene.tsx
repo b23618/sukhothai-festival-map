@@ -22,7 +22,7 @@ import { Facility, Festival } from './structures';
 const LOOK: Record<TimeOfDay, { sun: string; sunI: number; sunPos: [number, number, number]; hemiSky: string; hemiGround: string; hemiI: number; top: string; hor: string; glow: number }> = {
   day: { sun: '#fff4dc', sunI: 2.4, sunPos: [8, 14, 6], hemiSky: '#d6ecff', hemiGround: '#a99a66', hemiI: 1, top: '#6fb3ea', hor: '#f4ead2', glow: .05 },
   golden: { sun: '#ffb869', sunI: 2.7, sunPos: [-11, 6, 8], hemiSky: '#f6d9b0', hemiGround: '#9a7a4e', hemiI: .85, top: '#79a6d6', hor: '#ffc88a', glow: .35 },
-  night: { sun: '#a9bcff', sunI: 1.1, sunPos: [-6, 10, -5], hemiSky: '#6577b8', hemiGround: '#2a2e4a', hemiI: 1.1, top: '#060b22', hor: '#2c2552', glow: 1.7 },
+  night: { sun: '#8fa8ff', sunI: .45, sunPos: [-6, 10, -5], hemiSky: '#4a62c8', hemiGround: '#1c2040', hemiI: .65, top: '#050c4a', hor: '#243c9c', glow: .8 },
 };
 const skyVert = `varying vec3 vP; void main(){ vP=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`;
 const skyFrag = `uniform vec3 uTop; uniform vec3 uHor; varying vec3 vP; void main(){ float h=clamp(normalize(vP).y*1.6+.1,0.,1.); gl_FragColor=vec4(mix(uHor,uTop,pow(h,.7)),1.); }`;
@@ -33,6 +33,7 @@ function Atmosphere() {
   return <>
     <mesh><sphereGeometry args={[90, 24, 16]} /><shaderMaterial ref={sky} side={THREE.BackSide} depthWrite={false} vertexShader={skyVert} fragmentShader={skyFrag} uniforms={{ uTop: { value: new THREE.Color(look.top) }, uHor: { value: new THREE.Color(look.hor) } }} /></mesh>
     <hemisphereLight args={[look.hemiSky, look.hemiGround, look.hemiI]} />
+    {time === 'night' && <ambientLight color="#ffb878" intensity={.08} />}
     <directionalLight ref={sun} color={look.sun} intensity={look.sunI} position={[look.sunPos[0] + VENUE[0], look.sunPos[1], look.sunPos[2] + VENUE[1]]} castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-.0004} shadow-normalBias={.03} />
   </>;
 }
