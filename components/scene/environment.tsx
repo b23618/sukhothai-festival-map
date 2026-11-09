@@ -20,7 +20,7 @@ const g2 = (x: number, z: number): Pt => [(x / WORLD_W + .5) * 1000, (z / WORLD_
 /** Continuous terrain with vertex-coloured zones, pond basins, island mounds and a soil "diorama" skirt. */
 export function Terrain({ onPick }: { onPick?: (x: number, y: number) => void }) {
   const { top, skirt } = useMemo(() => {
-    const nx = 240, nz = 170, pos: number[] = [], col: number[] = [], idx: number[] = [], hs: number[][] = [];
+    const nx = 360, nz = 340, pos: number[] = [], col: number[] = [], idx: number[] = [], hs: number[][] = [];
     for (let j = 0; j <= nz; j++) { hs.push([]); for (let i = 0; i <= nx; i++) {
       const x = BOUNDS.x0 + i / nx * TW, z = BOUNDS.z0 + j / nz * TH, [gx, gy] = g2(x, z), h = heightAt(gx, gy);
       let pd = 1e9; for (const s of sites) pd = Math.min(pd, Math.hypot(gx - s[0], gy - s[1]));
@@ -62,6 +62,8 @@ export function Water() {
 }
 
 const KY = METER * VEXAG;
+// Roads are thin ribbons laid a hair above the terrain; without a depth offset they z-fight (flicker) with the ground and each other while the camera moves.
+for (const m of [M.asphalt, M.roadEdge, M.pathStone, M.pathEdge]) { m.polygonOffset = true; m.polygonOffsetFactor = -2; m.polygonOffsetUnits = -2; m.depthWrite = false; }
 /** Extruded footprints (ruin foundations / modern buildings) from OpenStreetMap, each set on the ground at its centroid. */
 function Footprints({ items, h, material }: { items: { pts: Pt[] }[]; h: number; material: THREE.Material }) {
   const geos = useMemo(() => items.map(it => { const c = it.pts.reduce((a, p) => [a[0] + p[0] / it.pts.length, a[1] + p[1] / it.pts.length], [0, 0]), gy = heightAt(c[0], c[1]);
@@ -84,7 +86,7 @@ export function OsmGround() {
 export function Roads() {
   const parts = useMemo(() => roads.map(r => { const pts = smoothOpen(r.pts, 8), road = r.kind === 'road'; return { id: r.id, edge: ribbonGeometry(pts, r.width + (road ? 3 : 2), .012), main: ribbonGeometry(pts, r.width, .016), edgeM: road ? M.roadEdge : M.pathEdge, mainM: road ? M.asphalt : M.pathStone }; }), []);
   return <group>
-    {parts.map(p => <group key={p.id}><mesh geometry={p.edge} material={p.edgeM} receiveShadow /><mesh geometry={p.main} material={p.mainM} receiveShadow /></group>)}
+    {parts.map(p => <group key={p.id}><mesh geometry={p.edge} material={p.edgeM} receiveShadow renderOrder={1} /><mesh geometry={p.main} material={p.mainM} receiveShadow renderOrder={2} /></group>)}
     <group>{bridges.map(b => <BridgeMesh key={b.id} a={b.a} b={b.b} w={b.width} />)}</group>
   </group>;
 }
@@ -113,7 +115,7 @@ const clear = (p: Pt, pad: number) => !osmSites.some(s => Math.hypot(p[0] - s[0]
 export function Vegetation() {
   const refs = [useRef<THREE.InstancedMesh>(null), useRef<THREE.InstancedMesh>(null), useRef<THREE.InstancedMesh>(null), useRef<THREE.InstancedMesh>(null), useRef<THREE.InstancedMesh>(null), useRef<THREE.InstancedMesh>(null)];
   const data = useMemo(() => {
-    const inside = scatter(200, p => insideVenue(p) && clear(p, 26)), outside = scatter(300, p => !insideVenue(p) && pondAt(p) < 0 && distToPolyline(p, boundary, true) > 10 && p[0] > BOUNDS_GRID.x0 + 12 && p[0] < BOUNDS_GRID.x1 - 12 && p[1] > BOUNDS_GRID.y0 + 12 && p[1] < BOUNDS_GRID.y1 - 12);
+    const inside = scatter(200, p => insideVenue(p) && clear(p, 26)), outside = scatter(520, p => !insideVenue(p) && pondAt(p) < 0 && distToPolyline(p, boundary, true) > 10 && p[0] > BOUNDS_GRID.x0 + 12 && p[0] < BOUNDS_GRID.x1 - 12 && p[1] > BOUNDS_GRID.y0 + 12 && p[1] < BOUNDS_GRID.y1 - 12 && roads.every(r => distToPolyline(p, r.pts) > r.width / 2 + 4) && !osmSites.some(q => Math.hypot(p[0] - q[0], p[1] - q[1]) < 8));
     const all = [...inside.map(t => ({ ...t, out: false })), ...outside.map(t => ({ ...t, out: true }))];
     const bushes = scatter(240, p => insideVenue(p) && clear(p, 20)), tufts = scatter(1600, p => insideVenue(p) && clear(p, 14));
     return { trees: [0, 1, 2].map(k => all.filter((_, i) => i % 3 === k)), bushes, tufts };

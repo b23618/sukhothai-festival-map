@@ -6,7 +6,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { osmBuildings, osmRuins } from '@/data/osm';
 import { ponds, roads } from '@/data/layout';
 import { allInitialPoints } from '@/data/points';
-import { CENTER, distToPolyline, mulberry32, toWorld, type Pt } from '@/lib/geo';
+import { VENUE, distToPolyline, mulberry32, toWorld, type Pt } from '@/lib/geo';
 import { geoToGrid } from '@/lib/georef';
 import { WATER_Y, heightAt, pondAt } from '@/lib/terrain';
 import { glowMaterials } from './materials';
@@ -48,7 +48,7 @@ function KrathongFleet() {
 /** Khom loi (sky lanterns) drifting up over the park; brighter at night. */
 function KhomLoi() {
   const ref = useRef<THREE.InstancedMesh>(null), fl = useRef<THREE.InstancedMesh>(null);
-  const items = useMemo(() => { const r = mulberry32(31); return Array.from({ length: 70 }, () => ({ x: CENTER[0] + (r() - .5) * 15, z: CENTER[1] + (r() - .5) * 11, y: r() * 7, v: .12 + r() * .14, s: .8 + r() * .5, ph: r() * 6.28 })); }, []);
+  const items = useMemo(() => { const r = mulberry32(31); return Array.from({ length: 70 }, () => ({ x: VENUE[0] + (r() - .5) * 15, z: VENUE[1] + (r() - .5) * 11, y: r() * 7, v: .12 + r() * .14, s: .8 + r() * .5, ph: r() * 6.28 })); }, []);
   const body = useMemo(() => new THREE.CylinderGeometry(.55, .38, 1, 10, 1, true), []), fg = useMemo(() => new THREE.SphereGeometry(.2, 6, 5).translate(0, -.45, 0), []);
   useFrame(st => { const t = st.clock.elapsedTime, o = new THREE.Object3D(); items.forEach((l, i) => { const y = .5 + ((l.y + t * l.v) % 7); o.position.set(l.x + Math.sin(t * .18 + l.ph) * .25 + y * .05, y, l.z + Math.cos(t * .15 + l.ph) * .15); o.rotation.set(0, l.ph, Math.sin(t + l.ph) * .05); o.scale.setScalar(.06 * l.s); o.updateMatrix(); ref.current!.setMatrixAt(i, o.matrix); fl.current!.setMatrixAt(i, o.matrix); }); ref.current!.instanceMatrix.needsUpdate = true; fl.current!.instanceMatrix.needsUpdate = true; });
   return <group><instancedMesh ref={ref} args={[body, paper, items.length]} frustumCulled={false} /><instancedMesh ref={fl} args={[fg, flame, items.length]} frustumCulled={false} /></group>;
@@ -77,7 +77,7 @@ function Fireworks() {
   const ref = useRef<THREE.Points>(null);
   const shells = useMemo(() => { const r = mulberry32(2569); return Array.from({ length: SHELLS }, (_, i) => {
     const col = new THREE.Color(COLORS[i % COLORS.length]), dirs = Array.from({ length: SPARKS }, () => { const u = r() * 2 - 1, a = r() * 6.283, q = Math.sqrt(1 - u * u), sp = .5 + r() * .9; return [q * Math.cos(a) * sp, u * sp, q * Math.sin(a) * sp] as const; });
-    return { x: CENTER[0] + (r() - .5) * 11, z: CENTER[1] + (r() - .5) * 7 - 1, h: 3.2 + r() * 2.2, off: r() * CYCLE, col, dirs }; }); }, []);
+    return { x: VENUE[0] + (r() - .5) * 11, z: VENUE[1] + (r() - .5) * 7 - 1, h: 3.2 + r() * 2.2, off: r() * CYCLE, col, dirs }; }); }, []);
   const geo = useMemo(() => { const g = new THREE.BufferGeometry(), n = SHELLS * (SPARKS + 1); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3)); g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(n * 3), 3)); return g; }, []);
   useFrame(st => { const pos = geo.attributes.position as THREE.BufferAttribute, col = geo.attributes.color as THREE.BufferAttribute; let k = 0;
     for (const s of shells) { const ph = (st.clock.elapsedTime + s.off) % CYCLE;

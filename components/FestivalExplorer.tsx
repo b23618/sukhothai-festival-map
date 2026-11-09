@@ -1,13 +1,15 @@
 'use client';
 import dynamic from 'next/dynamic';
 import {useEffect,useMemo,useState} from 'react';
-import {Layers, ChevronDown, ChevronUp, Search, MapPin, Landmark, CalendarDays, Wrench, Menu, X, Plus, Minus, Download, Navigation, Languages, Info, LocateFixed, Sun, Sunset, Moon, Box, ArrowDownToLine,} from 'lucide-react';
+import {ListChecks, Layers, ChevronDown, ChevronUp, Search, MapPin, Landmark, CalendarDays, Wrench, Menu, X, Plus, Minus, Download, Navigation, Languages, Info, LocateFixed, Sun, Sunset, Moon, Box, ArrowDownToLine,} from 'lucide-react';
 import {pointWorld,seriesLabel,type Category,type Point} from '@/data/points';
 import {useMapStore,type TimeOfDay} from '@/store/useMapStore';
 import PlaceMap from './PlaceMap';
 import RoutePanel from './RoutePanel';
 import Nearby from './Nearby';
+import Legend from './Legend';
 import GpsPanel from './GpsPanel';
+import {inDiorama} from '@/lib/georef';
 import {mapsOpenUrl} from '@/lib/googleMaps';
 import {festival,places} from '@/data/festival';
 const ThreeVenue=dynamic(()=>import('./ThreeVenue'),{ssr:false,loading:()=> <div className="loading">Loading 3D map…</div>});
@@ -22,7 +24,7 @@ const catLabel=(ui:any,c:Category,lang:'th'|'en'|'zh',series?:'festival'|'cultur
 const times:[TimeOfDay,typeof Sun][]=[['day',Sun],['golden',Sunset],['night',Moon]];
 export default function FestivalExplorer(){
  const S=useMapStore();const [about,setAbout]=useState(false);const {lang,points,query,category,selectedId,editor,time,mobileList,gpsMessage}=S;
- const ui=translations[lang];const [more,setMore]=useState(false);useEffect(()=>{setMore(false)},[selectedId]);const sheetBusy=!!(S.routeFrom||S.routeTo)||gpsMessage||S.locState!=='off';
+ const ui=translations[lang];const [more,setMore]=useState(false);const [legend,setLegend]=useState(false);useEffect(()=>{setMore(false)},[selectedId]);const sheetBusy=!!(S.routeFrom||S.routeTo)||gpsMessage||S.locState!=='off'||legend;
  useEffect(()=>{S.hydrate();S.autoTime();const id=setInterval(S.autoTime,60000);return()=>clearInterval(id)},[]);// eslint-disable-line react-hooks/exhaustive-deps
  const filtered=useMemo(()=>points.filter(p=>(category==='all'||p.category===category)&&[p.code,p.title.th,p.title.en,p.title.zh].some(s=>s.toLowerCase().includes(query.trim().toLowerCase()))),[points,category,query]);
  const selected=points.find(p=>p.id===selectedId)||null;
@@ -44,11 +46,13 @@ export default function FestivalExplorer(){
   <div className="flex overflow-hidden rounded-xl bg-white shadow-md">{times.map(([k,Icon])=><button key={k} title={ui[k]} aria-label={ui[k]} onClick={()=>S.setTime(k)} className={`grid h-10 w-10 max-md:h-9 max-md:w-9 place-items-center border-0 ${time===k?'bg-[#176b53] text-white':'bg-white text-[#53625a]'}`}><Icon size={17}/></button>)}</div>
   <div className="flex overflow-hidden rounded-xl bg-white text-[11px] shadow-md"><button className="flex items-center gap-1 border-0 bg-white px-2.5 py-2.5" onClick={()=>S.setView('overview')}><Box size={14}/><span className="max-md:hidden">{ui.overview}</span></button><button title={ui.iso} aria-label={ui.iso} className="flex items-center gap-1 border-0 bg-white px-2.5 py-2.5" onClick={()=>S.setView('iso')}><Layers size={14}/><span className="max-md:hidden">{ui.iso}</span></button><button className="flex items-center gap-1 border-0 bg-white px-2.5 py-2.5" onClick={()=>S.setView('top')}><ArrowDownToLine size={14}/><span className="max-md:hidden">{ui.top}</span></button></div>
  </div>
+<button className={`absolute right-5 top-[196px] z-10 grid h-[42px] w-[42px] place-items-center rounded-xl border-0 shadow-md max-md:right-2 max-md:top-[154px] max-md:h-[38px] max-md:w-[38px] ${legend?'bg-[#176b53] text-white':'bg-white text-[#53625a]'}`} aria-label={{th:'สัญลักษณ์',en:'Legend',zh:'图例'}[lang]} onClick={()=>setLegend(!legend)}><ListChecks size={14}/></button>
  <div className="map-instructions max-md:!hidden">{ui.instructions}{time==='night'&&<div className="mt-0.5 text-[9px] text-[#92691e]">{{th:'กระทง โคมลอย พลุ และกระถางไฟเป็นภาพประกอบ',en:'Krathong, lanterns, fireworks and flame bowl are decorative',zh:'水灯、孔明灯、烟花和火盆仅为装饰'}[lang]}</div>}</div>
  <RoutePanel/>
+ <Legend open={legend} onClose={()=>setLegend(false)}/>
  <GpsPanel/>
  {editor&&<div className="editor-banner">✎ {ui.editorHelp}</div>}
- {selected?<article className={`detail max-h-[70%] overflow-y-auto max-md:!bottom-2 max-md:!left-2 max-md:!right-2 max-md:!w-auto max-md:!max-h-[48%] max-md:!p-3.5 ${sheetBusy?'max-md:!hidden':''}`}><button className="detail-close" aria-label={ui.close} onClick={()=>S.select(null)}><X size={19}/></button><div className="eyebrow">{catLabel(ui,selected.category,lang,selected.series)} · {selected.code}</div><h3>{selected.title[lang]}</h3><div className="english-title">{selected.title.en}{selected.zhStatus==='pending'&&<span className="ml-2 rounded bg-[#eef3f8] px-1.5 py-0.5 text-[10px] text-[#47627f]">{ui.zhPending}</span>}</div><p>{selected.description[lang]}</p>
+ {selected?<article className={`detail max-h-[70%] overflow-y-auto max-md:!bottom-2 max-md:!left-2 max-md:!right-2 max-md:!w-auto max-md:!max-h-[48%] max-md:!p-3.5 ${sheetBusy?'max-md:!hidden':''}`}><button className="detail-close" aria-label={ui.close} onClick={()=>S.select(null)}><X size={19}/></button><div className="eyebrow">{catLabel(ui,selected.category,lang,selected.series)} · {selected.code}</div><h3>{selected.title[lang]}</h3><div className="english-title">{selected.title.en}{selected.zhStatus==='pending'&&<span className="ml-2 rounded bg-[#eef3f8] px-1.5 py-0.5 text-[10px] text-[#47627f]">{ui.zhPending}</span>}</div><p>{selected.description[lang]}</p>{!inDiorama([selected.x,selected.y])&&<div className="mb-2 rounded-lg bg-[#fff4dc] p-2 text-[11px] text-[#92691e]">{{th:'จุดนี้อยู่นอกพื้นที่แผนที่ 3 มิติ ใช้ปุ่มเดินและ Google Maps เพื่อไปยังจุดนี้',en:'This spot lies outside the 3D map area; use the walking buttons and Google Maps to reach it',zh:'此地点在3D地图范围之外，请使用步行按钮和谷歌地图前往'}[lang]}</div>}
 <div className="mt-3 flex flex-wrap gap-1.5">{([['me',{th:'เดินจากตำแหน่งฉัน',en:'Walk from my location',zh:'从我的位置步行'},()=>{S.locate();S.setRoute('me',selected.id)}],['start',{th:'ตั้งเป็นจุดเริ่มต้น',en:'Set as start',zh:'设为起点'},()=>S.setRoute(selected.id,undefined)],['end',{th:'ไปที่นี่',en:'Go here',zh:'前往此处'},()=>S.setRoute(undefined,selected.id)]] as const).map(([k,l,fn])=><button key={k} onClick={fn} className="inline-flex items-center gap-1.5 rounded-lg border border-[#176b53] bg-white px-2.5 py-1.5 text-[11px] text-[#176b53]"><Navigation size={13}/>{l[lang]}</button>)}</div>
   <button className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg border-0 bg-[#f4f5f2] py-1.5 text-[11px] text-[#53625a] md:hidden" onClick={()=>setMore(!more)}>{more?<ChevronUp size={14}/>:<ChevronDown size={14}/>}{{th:more?'ย่อ':'ดูรายละเอียดเพิ่มเติม',en:more?'Less':'More details',zh:more?'收起':'更多详情'}[lang]}</button>
   <div className={more?'':'max-md:hidden'}>

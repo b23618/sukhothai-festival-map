@@ -19,10 +19,12 @@ export function smoothClosed(poly: Pt[], per = 6): Pt[] { const n = poly.length,
 export function smoothOpen(pts: Pt[], per = 8): Pt[] { if (pts.length < 3) return pts; const out: Pt[] = []; for (let i = 0; i < pts.length - 1; i++) { const a = pts[Math.max(0, i - 1)], b = pts[i], c = pts[i + 1], d = pts[Math.min(pts.length - 1, i + 2)]; for (let k = 0; k < per; k++) { const t = k / per; out.push([cr(a[0], b[0], c[0], d[0], t), cr(a[1], b[1], c[1], d[1], t)]); } } out.push(pts[pts.length - 1]); return out; }
 export const circlePoly = (c: Pt, r: number, n = 12): Pt[] => Array.from({ length: n }, (_, i) => [c[0] + Math.cos(i / n * Math.PI * 2) * r, c[1] + Math.sin(i / n * Math.PI * 2) * r] as Pt);
 // Diorama extent (layout-grid -> world). Covers the venue plus a landscape margin; the plan's legend panel is excluded.
-export const BOUNDS_GRID = { x0: -30, x1: 610, y0: 20, y1: 610 };
+export const BOUNDS_GRID = { x0: -130, x1: 800, y0: -140, y1: 800 };
 export const BOUNDS = { x0: (BOUNDS_GRID.x0 / GRID_W - .5) * WORLD_W, x1: (BOUNDS_GRID.x1 / GRID_W - .5) * WORLD_W, z0: (BOUNDS_GRID.y0 / GRID_H - .5) * WORLD_H, z1: (BOUNDS_GRID.y1 / GRID_H - .5) * WORLD_H };
 export const CENTER: Pt = [(BOUNDS.x0 + BOUNDS.x1) / 2, (BOUNDS.z0 + BOUNDS.z1) / 2];
 // Real-world scale: the plan is ~to scale (see georef.ts): 1 grid cell ~ 2.64 m, so 1 world unit ~ 132 m.
 export const METER = GRID_UNIT / 2.64, GRID_PER_M = 1 / 2.64;
 /** Vertical exaggeration applied to heritage models so 20–30 m monuments stay legible next to 200 m footprints. */
 export const VEXAG = 1.8;
+/** Centre of the festival venue (world units). Cameras, lights and ambience aim here; CENTER is the centre of the whole (larger) terrain. */
+export const VENUE: Pt = toWorld(300, 345);

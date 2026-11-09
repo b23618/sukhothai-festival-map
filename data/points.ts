@@ -1,12 +1,15 @@
 import { toWorld } from '@/lib/geo';
 import { cultureRows, festivalRows, type Row } from './activities';
-import { geoToGrid } from '@/lib/georef';
+import { geoToGrid, gridToGeo } from '@/lib/georef';
+import { gateways } from './layout';
 export type Language = 'th' | 'en' | 'zh';
 export type Category = 'landmark' | 'activity' | 'facility';
 export type Localized = { th: string; en: string; zh: string };
 export type ModelType = 'wat-mahathat' | 'wat-chana' | 'noen-prasat' | 'wat-mai' | 'wat-sa-si' | 'traphang-ngoen' | 'monument' | 'pond-feature'
   | 'stage' | 'tent' | 'pavilion' | 'platform' | 'food' | 'rest' | 'arch' | 'floating-pier'
   | 'parking' | 'hospital' | 'wc' | 'bus-stop' | 'vip-tent' | 'hq' | 'gate';
+/** Emblem drawn above a spot in 3D (components/scene/symbols.tsx). */
+export type SymbolKind = 'nang' | 'market' | 'cowrie' | 'krathong' | 'fireworks' | 'candle' | 'wc' | 'parking' | 'firstaid' | 'bus';
 export interface Point {
   id: string; code: string; category: Category;
   /** Layout-grid position (1000x705). World position is derived with pointWorld(). */
@@ -23,6 +26,8 @@ export interface Point {
   status: 'name-verified' | 'placeholder' | 'generic';
   /** Optional GLB path (e.g. /models/wat-mahathat.glb). When set, it replaces the procedural model; falls back if it fails to load. */
   glb?: string;
+  /** Optional emblem so visitors recognise the kind of spot at a glance. */
+  symbol?: SymbolKind;
   /** Which legend list an activity belongs to on the official plan. */
   series?: 'festival' | 'culture';
   /** Real-world position (WGS84). Source: OpenStreetMap contributors (ODbL). Absent where no verified coordinate exists. */
@@ -94,4 +99,26 @@ export const placeParking: Point[] = [
   pk('sinwana', [17.017337, 99.714615], 300, true, 'ที่จอดรถ หลังร้านสินวนา', 'Parking: behind Sinwana shop', '停车场：Sinwana商店后'), pk('likhai', [17.028948, 99.704437], 500, true, 'ที่จอดรถ สนามบอล โรงเรียนลิไทฯ', 'Parking: Likhai School football field', '停车场：Likhai学校足球场'),
   pk('parkshop', [17.013113, 99.704941], 300, false, 'ที่จอดรถ ร้านค้าอุทยาน', 'Parking: Park shop area', '停车场：公园商店区'),
 ];
-export const allInitialPoints: Point[] = [...initialPoints, ...activityPoints, ...facilityPoints, ...placeParking];
+const PROV: Record<string, Localized> = { uttaradit: t('อุตรดิตถ์', 'Uttaradit', '程逸府'), tak: t('ตาก (แม่สอด)', 'Tak (Mae Sot)', '达府（湄索）'), phitsanulok: t('พิษณุโลก', 'Phitsanulok', '彭世洛府') };
+const DIRS: Record<string, Localized> = { N: t('ทิศเหนือ', 'north', '北'), E: t('ทิศตะวันออก', 'east', '东'), S: t('ทิศใต้', 'south', '南'), W: t('ทิศตะวันตก', 'west', '西') };
+const osmRel = (id: number, label: string) => ({ label: `OpenStreetMap route: ${label}`, url: `https://www.openstreetmap.org/relation/${id}` });
+/** Roads leaving the mapped area (from data/osm.ts): which highway, which way it heads, and which province it reaches when known. */
+export const gatewayPoints: Point[] = gateways.map(g => { const geo = gridToGeo(g.c[0], g.c[1]), d = g.dest ? PROV[g.dest] : null, w = DIRS[g.dir];
+  return { ...base, id: `road-${g.id}`, code: g.ref, category: 'facility', x: Math.round(g.c[0]), y: Math.round(g.c[1]), verified: true, status: 'name-verified', model: 'gate', height: .25, focusDistance: 3, tags: ['road', 'gateway'], geo,
+    title: t(`ทางหลวงหมายเลข ${g.ref}${d ? ` → ${d.th}` : ''}`, `Highway ${g.ref}${d ? ` → ${d.en}` : ''}`, `${g.ref}号公路${d ? ` → ${d.zh}` : ''}`),
+    description: d ? t(`ถนนหลักออกจากพื้นที่ไป${w.th} เชื่อมไปจังหวัด${d.th}`, `Main road leaving the area to the ${w.en}, linking to ${d.en}`, `向${w.zh}离开本区域的主干道，通往${d.zh}`) : t(`ถนนออกจากพื้นที่ไป${w.th} (ปลายทางยังไม่ได้ตรวจสอบ)`, `Road leaving the area to the ${w.en} (destination not verified)`, `向${w.zh}离开本区域的道路（目的地未核实）`),
+    sources: [g.ref === '102' ? osmRel(19329423, 'Highway 102 (Uttaradit – Mueang Kao)') : g.ref === '12' ? osmRel(19326458, 'Highway 12 (Mae Sot – Mukdahan)') : { label: 'OpenStreetMap', url: 'https://www.openstreetmap.org' }] }; });
+/** Pick the emblem from the official activity name / facility model. Only clear matches get one. */
+const symbolFor = (p: Point): SymbolKind | undefined => {
+  const n = p.title.th;
+  if (p.category === 'facility') return ({ wc: 'wc', parking: 'parking', hospital: 'firstaid', 'bus-stop': 'bus' } as Record<string, SymbolKind>)[p.model];
+  if (p.category !== 'activity') return undefined;
+  if (/นางนพมาศ|ท้าวศรีจุฬาลักษณ์/.test(n)) return 'nang';
+  if (/แลกเบี้ย/.test(n)) return 'cowrie';
+  if (/ตลาด|จำหน่ายสินค้า|มหกรรมสินค้า/.test(n) && !/กระทง/.test(n)) return 'market';
+  if (/จำหน่ายกระทง|กระทงใหญ่|ประกวดกระทง/.test(n)) return 'krathong';
+  if (/^การเล่นไฟ|พลุ/.test(n)) return 'fireworks';
+  if (/^พิธีเผาเทียน/.test(n)) return 'candle';
+  return undefined;
+};
+export const allInitialPoints: Point[] = [...initialPoints, ...activityPoints, ...facilityPoints, ...placeParking, ...gatewayPoints].map(p => { const symbol = symbolFor(p); return symbol ? { ...p, symbol } : p; });

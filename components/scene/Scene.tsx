@@ -5,7 +5,7 @@ import { Line, MapControls, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { scenery } from '@/data/layout';
 import { pointWorld, type Point } from '@/data/points';
-import { BOUNDS, CENTER, METER, VEXAG, hashString, mulberry32, toWorld } from '@/lib/geo';
+import { BOUNDS, VENUE, METER, VEXAG, hashString, mulberry32, toWorld } from '@/lib/geo';
 import { WATER_Y, heightAt, pondAt } from '@/lib/terrain';
 import { ponds } from '@/data/layout';
 import { pointInPoly } from '@/lib/geo';
@@ -14,6 +14,7 @@ import { M, glowMaterials } from './materials';
 import { OsmGround, Roads, Terrain, Vegetation, Water } from './environment';
 import { HeritageAt } from './heritage';
 import { Festive, UserDot } from './festive';
+import { Emblem } from './symbols';
 import { inDiorama } from '@/lib/georef';
 import { endpoint } from '@/lib/route';
 import { Facility, Festival } from './structures';
@@ -28,11 +29,11 @@ const skyFrag = `uniform vec3 uTop; uniform vec3 uHor; varying vec3 vP; void mai
 function Atmosphere() {
   const time = useMapStore(s => s.time), sun = useRef<THREE.DirectionalLight>(null), sky = useRef<THREE.ShaderMaterial>(null), look = LOOK[time];
   useEffect(() => { sky.current!.uniforms.uTop.value.set(look.top); sky.current!.uniforms.uHor.value.set(look.hor); glowMaterials.forEach(m => (m.emissiveIntensity = look.glow + .25)); }, [look]);
-  useLayoutEffect(() => { const s = sun.current!; s.target.position.set(CENTER[0], 0, CENTER[1]); s.target.updateMatrixWorld(); s.shadow.camera.left = -10; s.shadow.camera.right = 10; s.shadow.camera.top = 8; s.shadow.camera.bottom = -8; s.shadow.camera.near = 1; s.shadow.camera.far = 50; s.shadow.camera.updateProjectionMatrix(); }, []);
+  useLayoutEffect(() => { const s = sun.current!; s.target.position.set(VENUE[0], 0, VENUE[1]); s.target.updateMatrixWorld(); s.shadow.camera.left = -10; s.shadow.camera.right = 10; s.shadow.camera.top = 8; s.shadow.camera.bottom = -8; s.shadow.camera.near = 1; s.shadow.camera.far = 50; s.shadow.camera.updateProjectionMatrix(); }, []);
   return <>
     <mesh><sphereGeometry args={[90, 24, 16]} /><shaderMaterial ref={sky} side={THREE.BackSide} depthWrite={false} vertexShader={skyVert} fragmentShader={skyFrag} uniforms={{ uTop: { value: new THREE.Color(look.top) }, uHor: { value: new THREE.Color(look.hor) } }} /></mesh>
     <hemisphereLight args={[look.hemiSky, look.hemiGround, look.hemiI]} />
-    <directionalLight ref={sun} color={look.sun} intensity={look.sunI} position={[look.sunPos[0] + CENTER[0], look.sunPos[1], look.sunPos[2] + CENTER[1]]} castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-.0004} shadow-normalBias={.03} />
+    <directionalLight ref={sun} color={look.sun} intensity={look.sunI} position={[look.sunPos[0] + VENUE[0], look.sunPos[1], look.sunPos[2] + VENUE[1]]} castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-.0004} shadow-normalBias={.03} />
   </>;
 }
 
@@ -58,6 +59,7 @@ function PointModel({ p, selected }: { p: Point; selected: boolean }) {
     onClick={e => { if (editor) return; e.stopPropagation(); select(p.id); }} onPointerOver={() => { if (!editor) document.body.style.cursor = 'pointer'; }} onPointerOut={() => { document.body.style.cursor = ''; }}>
     <ModelSlot glb={p.glb} scale={1}>
       {FESTIVAL.has(model) ? <Festival kind={model} /> : <Facility kind={model} />}
+      {p.symbol && <Emblem kind={p.symbol} lift={p.category === 'facility' ? .16 : .26} />}
     </ModelSlot>
     {selected && <SelectionRing r={p.category === 'landmark' ? .62 : .4} />}
   </group>;
@@ -78,19 +80,19 @@ function RouteLine() {
 const pinEls: Record<string, HTMLSpanElement | null> = {};
 /** DOM pin overlay (outside the Canvas). Positions are written every frame by PinProjector. */
 function Pins() {
-  const points = useMapStore(s => s.points), query = useMapStore(s => s.query), category = useMapStore(s => s.category), selectedId = useMapStore(s => s.selectedId), select = useMapStore(s => s.select);
+  const lang = useMapStore(s => s.lang), points = useMapStore(s => s.points), query = useMapStore(s => s.query), category = useMapStore(s => s.category), selectedId = useMapStore(s => s.selectedId), select = useMapStore(s => s.select);
   const q = query.trim().toLowerCase();
   // Service pins are shown only when asked for (filter) or selected, to keep the 3D view readable.
-  const shown = useMemo(() => points.filter(p => inDiorama([p.x, p.y]) && (category === 'all' ? p.category !== 'facility' || p.id === selectedId : p.category === category) && (!q || [p.code, p.title.th, p.title.en, p.title.zh].some(s => s.toLowerCase().includes(q)))), [points, category, q, selectedId]);
+  const shown = useMemo(() => points.filter(p => inDiorama([p.x, p.y]) && (category === 'all' ? p.category !== 'facility' || p.id === selectedId || p.tags.includes('road') : p.category === category) && (!q || [p.code, p.title.th, p.title.en, p.title.zh].some(s => s.toLowerCase().includes(q)))), [points, category, q, selectedId]);
   return <div className="pointer-events-none absolute inset-0 overflow-hidden">{shown.map(p => <span key={p.id} ref={el => { pinEls[p.id] = el; }} style={{ position: 'absolute', left: 0, top: 0, display: 'none', pointerEvents: 'auto' }}>
-    <button type="button" title={p.title.en} className={`map-pin ${p.category} ${p.series ?? ''} ${selectedId === p.id ? 'selected' : ''} ${!p.verified ? 'unverified' : ''}`} onClick={() => select(p.id)}>{p.code}</button></span>)}</div>;
+    <button type="button" title={p.title.en} className={`map-pin ${p.tags.includes('road') ? 'road' : ''} ${p.category} ${p.series ?? ''} ${selectedId === p.id ? 'selected' : ''} ${!p.verified ? 'unverified' : ''}`} onClick={() => select(p.id)}>{p.tags.includes('road') ? `ทล.${p.code}`.replace('ทล.', lang === 'th' ? 'ทล.' : lang === 'zh' ? '' : 'Hwy ') + (p.title[lang].split('→')[1] ? ` → ${p.title[lang].split('→')[1].trim()}` : '') : p.code}</button></span>)}</div>;
 }
 function PinProjector() {
   const { camera, size } = useThree(), v = useMemo(() => new THREE.Vector3(), []);
   useFrame(() => { const pts = useMapStore.getState().points; for (const p of pts) { const el = pinEls[p.id]; if (!el) continue; const [x, z] = pointWorld(p); v.set(x, Math.max(heightAt(p.x, p.y), WATER_Y) + (p.category === 'landmark' ? p.height * METER * VEXAG + .35 : .55), z).project(camera); el.style.display = v.z > 1 ? 'none' : ''; el.style.transform = `translate(${(v.x * .5 + .5) * size.width}px,${(-v.y * .5 + .5) * size.height}px) translate(-50%,-50%)`; el.style.zIndex = String(Math.round((1 - v.z) * 1000)); } });
   return null;
 }
-const [CX, CZ] = CENTER;
+const [CX, CZ] = VENUE;
 const VIEWS = { overview: { pos: [CX + 9, 11, CZ + 13] as const, tgt: [CX, 0, CZ] as const }, iso: { pos: [CX + 9, 7, CZ + 5.5] as const, tgt: [CX, 0, CZ] as const }, top: { pos: [CX, 19, CZ + .01] as const, tgt: [CX, 0, CZ] as const } };
 function CameraRig() {
   const { camera, controls } = useThree(), c = controls as any, viewReq = useMapStore(s => s.viewReq), selectedId = useMapStore(s => s.selectedId), zoomReq = useMapStore(s => s.zoomReq), points = useMapStore(s => s.points);
@@ -116,12 +118,12 @@ function World() {
     <Atmosphere /><Terrain onPick={editor ? movePoint : undefined} /><Water /><Roads /><OsmGround /><Vegetation /><Scenery /><RouteLine /><Festive /><UserDot />
     {points.map(p => <PointModel key={p.id} p={p} selected={selectedId === p.id} />)}
     <PinProjector />
-    <MapControls makeDefault target={[CX, 0, CZ]} enableDamping dampingFactor={.09} minDistance={1.5} maxDistance={30} minPolarAngle={.05} maxPolarAngle={1.42} screenSpacePanning={false} />
+    <MapControls makeDefault target={[CX, 0, CZ]} enableDamping dampingFactor={.09} minDistance={1.5} maxDistance={46} minPolarAngle={.05} maxPolarAngle={1.42} screenSpacePanning={false} />
     <CameraRig />
   </>;
 }
 export default function Scene() {
-  return <div className="absolute inset-0 isolate"><Canvas shadows dpr={[1, 1.75]} camera={{ position: [...VIEWS.overview.pos], fov: 32, near: .1, far: 300 }} onCreated={({ camera }) => camera.lookAt(...VIEWS.overview.tgt)} gl={{ antialias: true, powerPreference: 'high-performance' }} style={{ touchAction: 'none' }}>
+  return <div className="absolute inset-0 isolate"><Canvas shadows dpr={[1, 1.75]} camera={{ position: [...VIEWS.overview.pos], fov: 32, near: .3, far: 200 }} onCreated={({ camera }) => camera.lookAt(...VIEWS.overview.tgt)} gl={{ antialias: true, powerPreference: 'high-performance' }} style={{ touchAction: 'none' }}>
     <Suspense fallback={null}><World /></Suspense>
   </Canvas><Pins /></div>;
 }
