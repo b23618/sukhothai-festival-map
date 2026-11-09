@@ -1,7 +1,7 @@
 'use client';
 import dynamic from 'next/dynamic';
 import {useEffect,useMemo,useRef,useState} from 'react';
-import {ListChecks, Layers, ChevronDown, ChevronUp, Search, MapPin, Landmark, CalendarDays, Wrench, Menu, X, Plus, Minus, Download, Navigation, Languages, Check, Info, LocateFixed, Sun, Sunset, Moon, Box, ArrowDownToLine,} from 'lucide-react';
+import {ListChecks, Layers, ChevronDown, ChevronUp, Search, MapPin, Landmark, CalendarDays, Wrench, Menu, X, Plus, Minus, Download, Navigation, Check, Info, LocateFixed, Sun, Sunset, Moon, Box, ArrowDownToLine,} from 'lucide-react';
 import {pointWorld,seriesLabel,type Category,type Language,type Point} from '@/data/points';
 import {useMapStore,type TimeOfDay} from '@/store/useMapStore';
 import PlaceMap from './PlaceMap';
@@ -22,13 +22,21 @@ const categories:('all'|Category)[]=['all','landmark','activity','facility'];
 const types:Record<'all'|Category,typeof Landmark>={all:MapPin,landmark:Landmark,activity:CalendarDays,facility:Wrench};
 const catLabel=(ui:any,c:Category,lang:'th'|'en'|'zh',series?:'festival'|'culture')=>c==='activity'?(series?seriesLabel[series][lang]:ui.activity):c==='facility'?ui.facility:ui.landmark;
 const times:[TimeOfDay,typeof Sun][]=[['day',Sun],['golden',Sunset],['night',Moon]];
-const LANGS:{k:Language;name:string;badge:string}[]=[{k:'th',name:'ไทย',badge:'ก'},{k:'en',name:'English',badge:'A'},{k:'zh',name:'中文',badge:'文'}];
+const LANGS:{k:Language;name:string}[]=[{k:'th',name:'ไทย'},{k:'en',name:'English'},{k:'zh',name:'中文'}];
+const star=(cx:number,cy:number,r:number)=>Array.from({length:10},(_,i)=>{const a=-Math.PI/2+i*Math.PI/5,q=i%2?r*.382:r;return `${(cx+q*Math.cos(a)).toFixed(2)},${(cy+q*Math.sin(a)).toFixed(2)}`}).join(' ');
+/** Inline SVG flags: Thailand (Thai), United Kingdom (English), China (Chinese). */
+function Flag({k}:{k:Language}){
+ const box="h-[18px] w-[26px] shrink-0 overflow-hidden rounded-[3px] shadow-[0_0_0_1px_rgba(0,0,0,.15)]";
+ if(k==='th')return <svg className={box} viewBox="0 0 30 20" aria-hidden><rect width="30" height="20" fill="#A51931"/><rect y="3.33" width="30" height="13.34" fill="#F4F5F8"/><rect y="6.67" width="30" height="6.66" fill="#2D2A4A"/></svg>;
+ if(k==='en')return <svg className={box} viewBox="0 0 60 40" preserveAspectRatio="xMidYMid slice" aria-hidden><rect width="60" height="40" fill="#012169"/><path d="M0,0 L60,40 M60,0 L0,40" stroke="#fff" strokeWidth="8"/><path d="M0,0 L60,40 M60,0 L0,40" stroke="#C8102E" strokeWidth="3"/><path d="M30,0 V40 M0,20 H60" stroke="#fff" strokeWidth="13"/><path d="M30,0 V40 M0,20 H60" stroke="#C8102E" strokeWidth="8"/></svg>;
+ return <svg className={box} viewBox="0 0 30 20" aria-hidden><rect width="30" height="20" fill="#DE2910"/><polygon points={star(5,5,3)} fill="#FFDE00"/><polygon points={star(10,2,1)} fill="#FFDE00"/><polygon points={star(12,4,1)} fill="#FFDE00"/><polygon points={star(12,7,1)} fill="#FFDE00"/><polygon points={star(10,9,1)} fill="#FFDE00"/></svg>;
+}
 function LangMenu({lang,onPick}:{lang:Language;onPick:(l:Language)=>void}){
  const [open,setOpen]=useState(false);const ref=useRef<HTMLDivElement>(null);
  useEffect(()=>{if(!open)return;const out=(e:MouseEvent)=>{if(!ref.current?.contains(e.target as Node))setOpen(false)},esc=(e:KeyboardEvent)=>{if(e.key==='Escape')setOpen(false)};document.addEventListener('mousedown',out);document.addEventListener('keydown',esc);return()=>{document.removeEventListener('mousedown',out);document.removeEventListener('keydown',esc)}},[open]);
  const cur=LANGS.find(l=>l.k===lang)!;
- return <div ref={ref} className="relative"><button type="button" aria-label="Language" aria-haspopup="listbox" aria-expanded={open} onClick={()=>setOpen(v=>!v)} className="flex items-center gap-1.5 rounded-xl border border-[#e9e9e0] bg-white px-3 py-2 text-[13px] max-md:px-2 max-md:py-[7px] max-md:text-[11px]"><Languages size={16}/><span>{cur.name}</span><ChevronDown size={13} className={open?'rotate-180':''}/></button>
-  {open&&<ul role="listbox" className="absolute right-0 top-[calc(100%+6px)] z-50 m-0 min-w-[150px] list-none rounded-xl border border-[#e9e9e0] bg-white p-1 shadow-lg">{LANGS.map(l=><li key={l.k} role="option" aria-selected={l.k===lang}><button type="button" onClick={()=>{onPick(l.k);setOpen(false)}} className={`flex w-full items-center gap-2.5 rounded-lg border-0 px-2.5 py-2 text-left text-[13px] ${l.k===lang?'bg-[#eef5f0] font-semibold text-[#176c54]':'bg-white text-[#172a24] hover:bg-[#f6f6f0]'}`}><span className="grid h-6 w-6 place-items-center rounded-full bg-[#176c54] text-[12px] font-bold text-white">{l.badge}</span><span className="flex-1">{l.name}</span>{l.k===lang&&<Check size={15}/>}</button></li>)}</ul>}
+ return <div ref={ref} className="relative"><button type="button" aria-label="Language" aria-haspopup="listbox" aria-expanded={open} onClick={()=>setOpen(v=>!v)} className="flex items-center gap-1.5 rounded-xl border border-[#e9e9e0] bg-white px-3 py-2 text-[13px] max-md:px-2 max-md:py-[7px] max-md:text-[11px]"><Flag k={lang}/><span>{cur.name}</span><ChevronDown size={13} className={open?'rotate-180':''}/></button>
+  {open&&<ul role="listbox" className="absolute right-0 top-[calc(100%+6px)] z-50 m-0 min-w-[150px] list-none rounded-xl border border-[#e9e9e0] bg-white p-1 shadow-lg">{LANGS.map(l=><li key={l.k} role="option" aria-selected={l.k===lang}><button type="button" onClick={()=>{onPick(l.k);setOpen(false)}} className={`flex w-full items-center gap-2.5 rounded-lg border-0 px-2.5 py-2 text-left text-[13px] ${l.k===lang?'bg-[#eef5f0] font-semibold text-[#176c54]':'bg-white text-[#172a24] hover:bg-[#f6f6f0]'}`}><Flag k={l.k}/><span className="flex-1">{l.name}</span>{l.k===lang&&<Check size={15}/>}</button></li>)}</ul>}
  </div>;
 }
 export default function FestivalExplorer(){
@@ -44,7 +52,7 @@ export default function FestivalExplorer(){
  <div className="workspace">
  <aside className={`sidebar ${mobileList?'show':''}`}><div className="sidebar-head"><div className="eyebrow">EXPLORE SUKHOTHAI</div><h2>{ui.explore}</h2><div className="search-box"><Search size={19}/><input value={query} onChange={e=>S.setQuery(e.target.value)} placeholder={ui.search}/>{query&&<button onClick={()=>S.setQuery('')} aria-label={ui.close}><X size={16}/></button>}</div></div>
  <div className="filters">{categoryButtons}</div><div className="list-caption">{filtered.length} {ui.count}</div>
- <div className="place-list">{filtered.length?filtered.map(p=><button key={p.id} className={`place-item ${selectedId===p.id?'active':''}`} onClick={()=>{S.select(p.id);S.setMobileList(false)}}><span className={`code ${p.category}`}>{p.code}</span><span className="place-copy"><strong>{p.title[lang]}</strong><small>{catLabel(ui,p.category,lang,p.series)} · {p.title.en}</small></span><span className="arrow">›</span></button>):<div className="no-results">{ui.empty}</div>}</div>
+ <div className="place-list">{filtered.length?filtered.map(p=><button key={p.id} className={`place-item ${selectedId===p.id?'active':''}`} onClick={()=>{S.select(p.id);S.setMobileList(false)}}><span className={`code ${p.category} ${p.series??''}`}>{p.code}</span><span className="place-copy"><strong>{p.title[lang]}</strong><small>{catLabel(ui,p.category,lang,p.series)} · {p.title.en}</small></span><span className="arrow">›</span></button>):<div className="no-results">{ui.empty}</div>}</div>
  <div className="sidebar-footer"><p className="m-0 text-[11px] leading-5 text-[#77857d]">{{th:'จัดทำโดย',en:'Created by',zh:'制作'}[lang]} <a className="font-semibold text-[#176c54] underline" href="https://www.facebook.com/nayboom2536?locale=th_TH" target="_blank" rel="noreferrer">{{th:'นายบูม เม่นเผือก',en:'Nai Boom Menpheuak',zh:'Boom Menpheuak'}[lang]}</a></p></div>
  </aside>
  <section className="map-area"><ThreeVenue/>
