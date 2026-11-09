@@ -38,7 +38,7 @@ export default function RoutePanel() {
       <div className="flex items-center gap-2"><Clock size={14} />{s.walk}: <b>{info.walkMin} {s.min}</b></div>
       <div className="flex items-center gap-2"><Compass size={14} />{s.dir}: <b>{s.head}{lang === 'en' ? ' ' : ''}{compass(lang, info.brg)}</b> ({Math.round(info.brg)}°)</div>
       {info.d > WALK_LIMIT_M && <div className="flex items-center gap-1.5 text-[11px] text-[#b04a1f]"><TriangleAlert size={13} />{s.far}</div>}
-      <div className="pt-1"><a className={`${btn} w-full !border-[#176b53] !bg-[#176b53] !text-white`} target="_blank" rel="noreferrer" href={mapsRouteUrl(a.geo, b.geo, lang)}><Footprints size={15} />{s.gm} <ExternalLink size={12} /></a></div>
+      <div className="pt-1"><a className={`${btn} map-action-link w-full !border-[#176b53] !bg-[#176b53]`} target="_blank" rel="noreferrer" href={mapsRouteUrl(a.geo, b.geo, lang)}><Footprints size={15} />{s.gm} <ExternalLink size={12} /></a></div>
       <div className="rounded-lg bg-[#fff4dc] px-2.5 py-2 text-[11px] text-[#80591b]">{routeHint[lang].line}</div>
       <div className="text-[10px] text-[#9a9384]">{s.approx}</div></div>}
     {selectedId&&<button className="mt-2 flex min-h-11 w-full items-center justify-center gap-1 border-0 bg-transparent text-[12px] font-semibold text-[#176b53] md:hidden" onClick={clearRoute}><ArrowLeft size={15}/>{routeHint[lang].back}</button>}

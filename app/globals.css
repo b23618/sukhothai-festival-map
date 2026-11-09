@@ -21,6 +21,7 @@
 .map-tools-toggle{display:grid;width:44px;height:44px;place-items:center;border:0;border-radius:12px;background:#fff;color:#53625a;box-shadow:0 4px 16px #00000017}
 .map-tools-toggle.on{background:#176b53;color:#fff}
 .map-tools-toggle span{display:none}
+.map-action-link,.map-action-link:visited,.map-action-link:hover{color:#fff}
 .map-tools-panel{position:absolute;top:52px;right:0;width:min(270px,calc(100vw - 16px));max-height:calc(100dvh - 160px);overflow-y:auto;padding:16px;border:1px solid var(--border);border-radius:16px;background:#fff;box-shadow:0 12px 36px #00000030}
 .map-tools-panel>strong{display:block;margin-bottom:12px;font-size:14px}
 .tool-section-title{display:block;margin:12px 0 6px;color:#647369;font-size:11px;font-weight:700}
