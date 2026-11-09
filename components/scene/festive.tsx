@@ -155,10 +155,10 @@ function glowSpec(p: Point) {
   if (p.category === 'landmark') return { col: '#ffb347', r: LOW ? 1.1 : .9, h: 2.4 };
   if (p.category === 'activity') return p.series === 'culture' ? { col: '#a46bff', r: .3, h: 1.1 } : { col: '#ff5fa2', r: .3, h: 1.1 };
   if (p.tags.includes('road')) return { col: '#4da3ff', r: .35, h: .9 };
-  if (p.model === 'wc') return { col: '#3fd2c7', r: .3, h: .7 };
-  if (p.model === 'parking' || p.model === 'vip-tent') return { col: '#4da3ff', r: .3, h: .7 };
+  if (p.model === 'wc') return { col: '#8fdcff', r: .3, h: .7 };
+  if (p.model === 'parking' || p.model === 'vip-tent') return { col: '#2b7fd6', r: .3, h: .7 };
   if (p.model === 'hospital') return { col: '#ff6b6b', r: .32, h: .8 };
-  if (p.model === 'bus-stop') return { col: '#ffd24a', r: .32, h: .8 };
+  if (p.model === 'bus-stop') return { col: '#2b7fd6', r: .32, h: .8 };
   return { col: '#5fe0ff', r: .32, h: .8 };
 }
 function PlaceGlow() {

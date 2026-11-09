@@ -4,7 +4,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Line, MapControls, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { scenery } from '@/data/layout';
-import { pointWorld, type Point } from '@/data/points';
+import { inCategory, pointWorld, type Point } from '@/data/points';
 import { BOUNDS, VENUE, METER, VEXAG, hashString, mulberry32, toWorld } from '@/lib/geo';
 import { WATER_Y, heightAt, pondAt } from '@/lib/terrain';
 import { ponds } from '@/data/layout';
@@ -84,9 +84,9 @@ const pinEls: Record<string, HTMLSpanElement | null> = {};
 function Pins() {
   const lang = useMapStore(s => s.lang), points = useMapStore(s => s.points), query = useMapStore(s => s.query), category = useMapStore(s => s.category), selectedId = useMapStore(s => s.selectedId), select = useMapStore(s => s.select);
   const q = query.trim().toLowerCase();
-  const shown = useMemo(() => points.filter(p => inDiorama([p.x, p.y]) && (category === 'all' || p.category === category) && (!q || [p.code, p.title.th, p.title.en, p.title.zh].some(s => s.toLowerCase().includes(q)))), [points, category, q, selectedId]);
+  const shown = useMemo(() => points.filter(p => inDiorama([p.x, p.y]) && inCategory(p, category) && (!q || [p.code, p.title.th, p.title.en, p.title.zh].some(s => s.toLowerCase().includes(q)))), [points, category, q, selectedId]);
   return <div className="pointer-events-none absolute inset-0 overflow-hidden">{shown.map(p => <span key={p.id} ref={el => { pinEls[p.id] = el; }} style={{ position: 'absolute', left: 0, top: 0, display: 'none', pointerEvents: 'auto' }}>
-    <button type="button" title={p.title.en} className={`map-pin ${p.tags.includes('road') ? 'road' : ''} ${p.category} ${p.series ?? ''} ${selectedId === p.id ? 'selected' : ''} ${!p.verified ? 'unverified' : ''}`} onClick={() => select(p.id)}>{p.tags.includes('road') ? `ทล.${p.code}`.replace('ทล.', lang === 'th' ? 'ทล.' : lang === 'zh' ? '' : 'Hwy ') + (p.title[lang].split('→')[1] ? ` → ${p.title[lang].split('→')[1].trim()}` : '') : p.code}</button></span>)}</div>;
+    <button type="button" title={p.title.en} className={`map-pin ${p.tags.includes('road') ? 'road' : ''} ${p.category} m-${p.model} ${p.series ?? ''} ${selectedId === p.id ? 'selected' : ''} ${!p.verified ? 'unverified' : ''}`} onClick={() => select(p.id)}>{p.tags.includes('road') ? `ทล.${p.code}`.replace('ทล.', lang === 'th' ? 'ทล.' : lang === 'zh' ? '' : 'Hwy ') + (p.title[lang].split('→')[1] ? ` → ${p.title[lang].split('→')[1].trim()}` : '') : p.code}</button></span>)}</div>;
 }
 function PinProjector() {
   const { camera, size } = useThree(), v = useMemo(() => new THREE.Vector3(), []);

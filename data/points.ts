@@ -123,3 +123,8 @@ const symbolFor = (p: Point): SymbolKind | undefined => {
   return undefined;
 };
 export const allInitialPoints: Point[] = [...initialPoints, ...activityPoints, ...facilityPoints, ...placeParking, ...gatewayPoints].map(p => { const symbol = symbolFor(p); return symbol ? { ...p, symbol } : p; });
+
+/** Sidebar / 3D filter. firstaid / parking / shuttle / wc are virtual categories matched on the facility's model. */
+export type CategoryFilter = 'all' | Category | 'firstaid' | 'parking' | 'shuttle' | 'wc';
+const FILTER_MODEL: Record<string, string> = { firstaid: 'hospital', parking: 'parking', shuttle: 'bus-stop', wc: 'wc' };
+export const inCategory = (p: Point, c: CategoryFilter) => c === 'all' || (FILTER_MODEL[c] ? p.model === FILTER_MODEL[c] : p.category === c);

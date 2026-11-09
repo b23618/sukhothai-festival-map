@@ -1,14 +1,14 @@
 import { create } from 'zustand';
 import type { UserPos } from '@/lib/route';
-import { allInitialPoints, type Category, type Language, type Point } from '@/data/points';
+import { allInitialPoints, type Category, type CategoryFilter, type Language, type Point } from '@/data/points';
 export type TimeOfDay = 'day' | 'golden' | 'night';
 export type ViewName = 'overview' | 'top' | 'iso';
 interface State {
-  lang: Language; points: Point[]; query: string; category: 'all' | Category; selectedId: string | null; time: TimeOfDay;
+  lang: Language; points: Point[]; query: string; category: CategoryFilter; selectedId: string | null; time: TimeOfDay;
   routeFrom: string | null; routeTo: string | null; userPos: UserPos | null; locState: 'off' | 'asking' | 'on' | 'denied' | 'unsupported'; timeManual: boolean; mobileList: boolean; gpsMessage: boolean; zoomReq: number; viewReq: { name: ViewName; n: number } | null;
   locate: () => void; stopLocate: () => void; autoTime: () => void;
   setRoute: (from?: string | null, to?: string | null) => void; clearRoute: () => void;
-  setLang: (l: Language) => void; setQuery: (q: string) => void; setCategory: (c: 'all' | Category) => void; select: (id: string | null) => void;
+  setLang: (l: Language) => void; setQuery: (q: string) => void; setCategory: (c: CategoryFilter) => void; select: (id: string | null) => void;
   setTime: (t: TimeOfDay) => void; setMobileList: (b: boolean) => void; setGps: (b: boolean) => void;
   zoom: (dir: 1 | -1) => void; setView: (v: ViewName) => void;
 }

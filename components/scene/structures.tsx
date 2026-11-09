@@ -37,7 +37,7 @@ function ParkingLot() {
 export function Facility({ kind }: { kind: string }) {
   switch (kind) {
     case 'parking': return <ParkingLot />;
-    case 'hospital': return <group><Bx s={[.26, .14, .2]} p={[0, .07, 0]} m={M.white} /><Bx s={[.28, .02, .22]} p={[0, .15, 0]} m={M.stone} /><Bx s={[.1, .03, .004]} p={[0, .09, .102]} m={M.green} /><Bx s={[.03, .1, .004]} p={[0, .09, .102]} m={M.green} /><Sign p={[.2, 0, .12]} text="+" bg="#2f8f5a" /></group>;
+    case 'hospital': return <group><Bx s={[.26, .14, .2]} p={[0, .07, 0]} m={M.white} /><Bx s={[.28, .02, .22]} p={[0, .15, 0]} m={M.stone} /><Bx s={[.1, .03, .004]} p={[0, .09, .102]} m={M.red} /><Bx s={[.03, .1, .004]} p={[0, .09, .102]} m={M.red} /><Sign p={[.2, 0, .12]} text="+" bg="#c0392b" /></group>;
     case 'hq': return <group><Bx s={[.3, .12, .2]} p={[0, .06, 0]} m={M.stucco} /><mesh position={[0, .18, 0]} rotation={[0, Math.PI / 4, 0]} material={M.roofRed} castShadow><coneGeometry args={[.24, .1, 4]} /></mesh><Sign p={[.2, 0, .12]} text="HQ" bg="#a83b2b" /></group>;
     case 'wc': return <group><Bx s={[.2, .12, .14]} p={[0, .06, 0]} m={M.stucco} /><Bx s={[.22, .02, .16]} p={[0, .13, 0]} m={M.blue} /><Sign p={[.15, 0, .1]} text="WC" bg="#2b6fa8" /></group>;
     case 'bus-stop': return <group><Bx s={[.3, .015, .14]} p={[0, .2, 0]} m={M.blue} />{[-.13, .13].map(x => <Post key={x} p={[x, 0, 0]} h={.2} r={.008} m={M.dark} />)}<Bx s={[.22, .02, .05]} p={[0, .05, -.03]} m={M.teak} /><Sign p={[.2, 0, 0]} text="BUS" bg="#6d3f9b" /></group>;
