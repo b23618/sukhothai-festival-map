@@ -82,8 +82,8 @@ function RouteLine() {
   if (!pts) return null;
   const ends = [pts.v[0], pts.v[pts.v.length - 1]], d = pts.dashed;
   return <group>
-    <Line points={pts.v} color="#ffffff" lineWidth={LOW ? 9 : 11} dashed={d} dashSize={.12} gapSize={.07} depthTest={false} renderOrder={6} />
-    <Line points={pts.v} color="#e8175d" lineWidth={LOW ? 5 : 6} dashed={d} dashSize={.12} gapSize={.07} depthTest={false} renderOrder={7} />
+    <Line points={pts.v} color="#ffffff" lineWidth={LOW ? 9 : 11} dashed={d} dashSize={.12} gapSize={.07} depthTest={false} frustumCulled={false} renderOrder={6} />
+    <Line points={pts.v} color="#e8175d" lineWidth={LOW ? 5 : 6} dashed={d} dashSize={.12} gapSize={.07} depthTest={false} frustumCulled={false} renderOrder={7} />
     {ends.map((e, i) => <mesh key={i} position={e} renderOrder={8}><sphereGeometry args={[.09, 16, 12]} /><meshBasicMaterial color={i ? '#e8175d' : '#1fa35a'} depthTest={false} /></mesh>)}
   </group>;
 }
@@ -104,19 +104,24 @@ function PinProjector() {
 const [CX, CZ] = VENUE;
 const VIEWS = { overview: { pos: [CX + 9, 11, CZ + 13] as const, tgt: [CX, 0, CZ] as const }, iso: { pos: [CX + 9, 7, CZ + 5.5] as const, tgt: [CX, 0, CZ] as const }, top: { pos: [CX, 19, CZ + .01] as const, tgt: [CX, 0, CZ] as const } };
 function CameraRig() {
-  const { camera, controls } = useThree(), c = controls as any, viewReq = useMapStore(s => s.viewReq), selectedId = useMapStore(s => s.selectedId), zoomReq = useMapStore(s => s.zoomReq), points = useMapStore(s => s.points);
+  const { camera, controls, size } = useThree(), c = controls as any, viewReq = useMapStore(s => s.viewReq), selectedId = useMapStore(s => s.selectedId), zoomReq = useMapStore(s => s.zoomReq), points = useMapStore(s => s.points);
   const goal = useRef<{ t: THREE.Vector3; p: THREE.Vector3 | null; d: number | null } | null>(null);
   useEffect(() => { if (!c) return; const stop = () => { goal.current = null; }; c.addEventListener('start', stop); return () => c.removeEventListener('start', stop); }, [c]);
   useEffect(() => { if (!viewReq) return; const v = VIEWS[viewReq.name]; goal.current = { t: new THREE.Vector3(...v.tgt), p: new THREE.Vector3(...v.pos), d: null }; }, [viewReq]);
   useEffect(() => { if (!selectedId) return; const p = points.find(q => q.id === selectedId); if (!p) return; const [x, z] = pointWorld(p); goal.current = { t: new THREE.Vector3(x, heightAt(p.x, p.y) + p.height * METER * VEXAG * .35 - p.focusDistance * .09, z), p: null, d: p.focusDistance * 2 }; }, [selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
   const routeFrom = useMapStore(s => s.routeFrom), routeTo = useMapStore(s => s.routeTo), userPos = useMapStore(s => s.userPos);
   useEffect(() => {
-    if (!routeFrom || !routeTo || routeFrom === routeTo) return;
+    if (!c || !routeFrom || !routeTo || routeFrom === routeTo) return;
     const a = endpoint(routeFrom, points, userPos), b = endpoint(routeTo, points, userPos); if (!a || !b) return;
     const ws = walkRoute(a.grid, b.grid).pts.map(([gx, gy]) => toWorld(gx, gy)), xs = ws.map(w => w[0]), zs = ws.map(w => w[1]);
     const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
-    goal.current = { t: new THREE.Vector3((x0 + x1) / 2, 0, (z0 + z1) / 2), p: null, d: THREE.MathUtils.clamp(Math.max(x1 - x0, z1 - z0) * 1.5 + 3, 4, 30) };
-  }, [routeFrom, routeTo, !!userPos]); // eslint-disable-line react-hooks/exhaustive-deps
+    const ext = Math.max(x1 - x0, z1 - z0), mobile = window.innerWidth < 768, tgt = new THREE.Vector3((x0 + x1) / 2, 0, (z0 + z1) / 2);
+    const back = camera.position.clone().sub(c.target).setY(0).normalize(), az = Math.atan2(back.x, back.z), el = .95;
+    // desktop: route panel sits at the right edge, slide the route left. phone: panel covers the bottom ~45%, fit by narrow width and lift the route.
+    const d = mobile ? THREE.MathUtils.clamp(ext * 1.9 / (.574 * Math.min(size.width / size.height, 1)) + 2, 5, 70) : THREE.MathUtils.clamp(ext * 1.5 + 3, 4, 30);
+    if (mobile) tgt.addScaledVector(back, d * .15); else tgt.addScaledVector(new THREE.Vector3(-back.z, 0, back.x), -d * .16);
+    goal.current = { t: tgt, p: tgt.clone().add(new THREE.Vector3(Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el)).multiplyScalar(d)), d: null };
+  }, [c, routeFrom, routeTo, !!userPos]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!c || !zoomReq) return; const off = camera.position.clone().sub(c.target); off.setLength(THREE.MathUtils.clamp(off.length() * (zoomReq > 0 ? 1 / 1.35 : 1.35), c.minDistance, c.maxDistance)); camera.position.copy(c.target).add(off); c.update(); }, [zoomReq]); // eslint-disable-line react-hooks/exhaustive-deps
   useFrame((_, dt) => {
     if (!c) return; const g = goal.current, k = 1 - Math.exp(-5 * dt);
@@ -135,7 +140,7 @@ function World() {
     <Atmosphere /><Terrain /><Water /><Roads /><OsmGround /><Vegetation /><Scenery /><RouteLine /><Festive /><UserDot />
     {points.map(p => <PointModel key={p.id} p={p} selected={selectedId === p.id} />)}
     <PinProjector />
-    <MapControls makeDefault target={[CX, 0, CZ]} enableDamping dampingFactor={.09} minDistance={1.5} maxDistance={46} minPolarAngle={.05} maxPolarAngle={1.42} screenSpacePanning={false} />
+    <MapControls makeDefault target={[CX, 0, CZ]} enableDamping dampingFactor={.09} minDistance={1.5} maxDistance={72} minPolarAngle={.05} maxPolarAngle={1.42} screenSpacePanning={false} />
     <CameraRig />
   </>;
 }
