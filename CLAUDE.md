@@ -36,6 +36,8 @@ Gotchas: pins are a plain DOM overlay projected every frame by `PinProjector` â€
 
 ### Data accuracy
 
+Landmark GPS (Aâ€“H) was cross-checked against Google Maps place pins on 2026-11-09: A, C, E, G match exactly, D within ~40 m; B (Wat Chana Songkhram) and F (Wat Traphang Ngoen) were moved to the Google pins (the official-site GPS was 74 m / 156 m off). H (Traphang Tan) was not verified. Landmark `x,y` are hard-coded, so recompute them with `geoToGrid` whenever `geo` changes.
+
 Coordinates, shapes and all 3D models are artistic approximations. Activity names are official but English/Chinese are translations; `schedule` is null; Chinese text is marked `zhStatus:'pending'`. Do not invent real activity names, schedules or historical claims. GPS button intentionally shows a "not available" notice.
 
 ## Terrain extent & roads out of the area
