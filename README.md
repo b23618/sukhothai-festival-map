@@ -15,14 +15,14 @@ Open http://localhost:3000.
 
 ## Features
 
-- Authentic provided venue image as Three.js texture
-- Drag/pan and wheel or pinch zoom
-- 8 landmark pins A–H with Thai, English and Chinese names
-- 23 numbered activities, with explicit placeholders until organizer verification
-- Search, category filters, responsive desktop sidebar and mobile menu
-- Clickable details and coordinate readout
-- Admin-style **coordinate edit mode**: select a pin from the list, enable edit mode, click its desired location on the map, export JSON
-- Persist manual coordinate edits in this browser via localStorage
+- Fully procedural 3D scene — **no map image is used as a texture or background** (the plan lives in `reference/` for analysis only)
+- Terrain with ponds, island mounds and soil skirt; animated water shader; roads, stone paths and bridges
+- Instanced trees, bushes and grass; floating krathong; sky lanterns at golden hour/night
+- Distinct procedural models for landmarks A–H (lotus-bud and bell chedis, ruins, mondop, monument, pond), generic festival set-pieces, parking, first aid, WC, shuttle stops, VIP tents, gates
+- Day / golden / night lighting, soft shadows, camera tweens to selected places, overview / isometric / top views
+- Thai / English / Chinese UI (Chinese text flagged pending review), search, filters
+- Coordinate edit mode (click terrain to move the selected item; export JSON); edits stored in this browser
+- Optional GLB replacement per point (`glb` field in `data/points.ts`, e.g. `/models/wat-mahathat.glb`); falls back to the procedural model
 
 ## Dataset and accuracy
 
