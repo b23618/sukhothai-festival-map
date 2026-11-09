@@ -1,7 +1,7 @@
 'use client';
 import dynamic from 'next/dynamic';
 import {useEffect,useMemo,useState} from 'react';
-import {Search, MapPin, Landmark, CalendarDays, Wrench, Menu, X, Plus, Minus, Download, Navigation, Languages, Info, LocateFixed, Sun, Sunset, Moon, Box, ArrowDownToLine, Flame} from 'lucide-react';
+import {Search, MapPin, Landmark, CalendarDays, Wrench, Menu, X, Plus, Minus, Download, Navigation, Languages, Info, LocateFixed, Sun, Sunset, Moon, Box, ArrowDownToLine,} from 'lucide-react';
 import {pointWorld,seriesLabel,type Category,type Point} from '@/data/points';
 import {useMapStore,type TimeOfDay} from '@/store/useMapStore';
 import PlaceMap from './PlaceMap';
@@ -23,7 +23,7 @@ const times:[TimeOfDay,typeof Sun][]=[['day',Sun],['golden',Sunset],['night',Moo
 export default function FestivalExplorer(){
  const S=useMapStore();const [about,setAbout]=useState(false);const {lang,points,query,category,selectedId,editor,time,mobileList,gpsMessage}=S;
  const ui=translations[lang];
- useEffect(()=>{S.hydrate()},[]);// eslint-disable-line react-hooks/exhaustive-deps
+ useEffect(()=>{S.hydrate();S.autoTime();const id=setInterval(S.autoTime,60000);return()=>clearInterval(id)},[]);// eslint-disable-line react-hooks/exhaustive-deps
  const filtered=useMemo(()=>points.filter(p=>(category==='all'||p.category===category)&&[p.code,p.title.th,p.title.en,p.title.zh].some(s=>s.toLowerCase().includes(query.trim().toLowerCase()))),[points,category,query]);
  const selected=points.find(p=>p.id===selectedId)||null;
  function downloadData(){const out=points.map(p=>({...p,world:pointWorld(p)}));const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});const href=URL.createObjectURL(blob);const a=document.createElement('a');a.href=href;a.download='sukhothai-map-points.json';a.click();URL.revokeObjectURL(href)}
@@ -44,8 +44,7 @@ export default function FestivalExplorer(){
   <div className="flex overflow-hidden rounded-xl bg-white shadow-md">{times.map(([k,Icon])=><button key={k} title={ui[k]} aria-label={ui[k]} onClick={()=>S.setTime(k)} className={`grid h-10 w-10 place-items-center border-0 ${time===k?'bg-[#176b53] text-white':'bg-white text-[#53625a]'}`}><Icon size={17}/></button>)}</div>
   <div className="flex overflow-hidden rounded-xl bg-white text-[11px] shadow-md"><button className="flex items-center gap-1 border-0 bg-white px-2.5 py-2.5" onClick={()=>S.setView('overview')}><Box size={14}/>{ui.overview}</button><button className="border-0 bg-white px-2.5 py-2.5" onClick={()=>S.setView('iso')}>{ui.iso}</button><button className="flex items-center gap-1 border-0 bg-white px-2.5 py-2.5" onClick={()=>S.setView('top')}><ArrowDownToLine size={14}/>{ui.top}</button></div>
  </div>
- <button className={`absolute left-5 top-[184px] flex items-center gap-1.5 rounded-xl border-0 px-2.5 py-2.5 text-[11px] shadow-md max-md:left-3 max-md:top-[170px] ${S.festive?'bg-[#ffb23a] text-[#4a2d00]':'bg-white text-[#53625a]'}`} title={{th:'สัญลักษณ์ลอยกระทง (ภาพประกอบ)',en:'Loy Krathong symbols (decorative)',zh:'水灯节符号（装饰）'}[lang]} onClick={()=>S.setFestive(!S.festive)}><Flame size={14}/>{{th:'ลอยกระทง',en:'Loy Krathong',zh:'水灯节'}[lang]}</button>
- <div className="map-instructions">{ui.instructions}{S.festive&&<div className="mt-0.5 text-[9px] text-[#92691e]">{{th:'กระทง โคมลอย และไฟพิธีเป็นภาพประกอบ',en:'Krathong, lanterns and flame bowl are decorative',zh:'水灯、孔明灯和火盆仅为装饰'}[lang]}</div>}</div>
+ <div className="map-instructions">{ui.instructions}{time==='night'&&<div className="mt-0.5 text-[9px] text-[#92691e]">{{th:'กระทง โคมลอย พลุ และกระถางไฟเป็นภาพประกอบ',en:'Krathong, lanterns, fireworks and flame bowl are decorative',zh:'水灯、孔明灯、烟花和火盆仅为装饰'}[lang]}</div>}</div>
  <RoutePanel/>
  <GpsPanel/>
  {editor&&<div className="editor-banner">✎ {ui.editorHelp}</div>}

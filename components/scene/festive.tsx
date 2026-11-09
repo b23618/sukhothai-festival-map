@@ -47,11 +47,11 @@ function KrathongFleet() {
 }
 /** Khom loi (sky lanterns) drifting up over the park; brighter at night. */
 function KhomLoi() {
-  const time = useMapStore(s => s.time), ref = useRef<THREE.InstancedMesh>(null), fl = useRef<THREE.InstancedMesh>(null);
+  const ref = useRef<THREE.InstancedMesh>(null), fl = useRef<THREE.InstancedMesh>(null);
   const items = useMemo(() => { const r = mulberry32(31); return Array.from({ length: 70 }, () => ({ x: CENTER[0] + (r() - .5) * 15, z: CENTER[1] + (r() - .5) * 11, y: r() * 7, v: .12 + r() * .14, s: .8 + r() * .5, ph: r() * 6.28 })); }, []);
   const body = useMemo(() => new THREE.CylinderGeometry(.55, .38, 1, 10, 1, true), []), fg = useMemo(() => new THREE.SphereGeometry(.2, 6, 5).translate(0, -.45, 0), []);
   useFrame(st => { const t = st.clock.elapsedTime, o = new THREE.Object3D(); items.forEach((l, i) => { const y = .5 + ((l.y + t * l.v) % 7); o.position.set(l.x + Math.sin(t * .18 + l.ph) * .25 + y * .05, y, l.z + Math.cos(t * .15 + l.ph) * .15); o.rotation.set(0, l.ph, Math.sin(t + l.ph) * .05); o.scale.setScalar(.06 * l.s); o.updateMatrix(); ref.current!.setMatrixAt(i, o.matrix); fl.current!.setMatrixAt(i, o.matrix); }); ref.current!.instanceMatrix.needsUpdate = true; fl.current!.instanceMatrix.needsUpdate = true; });
-  return <group visible={time !== 'day'}><instancedMesh ref={ref} args={[body, paper, items.length]} frustumCulled={false} /><instancedMesh ref={fl} args={[fg, flame, items.length]} frustumCulled={false} /></group>;
+  return <group><instancedMesh ref={ref} args={[body, paper, items.length]} frustumCulled={false} /><instancedMesh ref={fl} args={[fg, flame, items.length]} frustumCulled={false} /></group>;
 }
 /** Free grid spot near `from`: on land, off roads, ruins, buildings and other points. */
 function freeSpot(from: Pt, skip: Pt[]): Pt {
@@ -70,7 +70,27 @@ function Symbols() {
     <group position={[fx, fy, fz]}><mesh position={[0, .12, 0]} material={stone} castShadow><cylinderGeometry args={[.07, .12, .24, 10]} /></mesh><mesh position={[0, .3, 0]} material={stone} castShadow><cylinderGeometry args={[.17, .07, .12, 12]} /></mesh><mesh ref={fr} position={[0, .42, 0]} material={flame}><coneGeometry args={[.08, .24, 8]} /></mesh></group>
   </>;
 }
-export function Festive() { const on = useMapStore(s => s.festive); return on ? <><KrathongFleet /><KhomLoi /><Symbols /></> : null; }
+/** Firework shells: rocket climbs, bursts into ~100 fading sparks that fall under gravity. Night only. */
+const dot = (() => { if (typeof document === 'undefined') return null; const c = document.createElement('canvas'); c.width = c.height = 32; const x = c.getContext('2d')!, g = x.createRadialGradient(16, 16, 0, 16, 16, 16); g.addColorStop(0, '#fff'); g.addColorStop(.35, 'rgba(255,255,255,.8)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 32, 32); return new THREE.CanvasTexture(c); })();
+const SHELLS = 9, SPARKS = 90, CYCLE = 8, RISE = 1.1, BURN = 2.8, COLORS = ['#ff4d4d', '#ffd24a', '#4dd2ff', '#7dff6a', '#ff7be0', '#ffffff', '#ff9a3a'];
+function Fireworks() {
+  const ref = useRef<THREE.Points>(null);
+  const shells = useMemo(() => { const r = mulberry32(2569); return Array.from({ length: SHELLS }, (_, i) => {
+    const col = new THREE.Color(COLORS[i % COLORS.length]), dirs = Array.from({ length: SPARKS }, () => { const u = r() * 2 - 1, a = r() * 6.283, q = Math.sqrt(1 - u * u), sp = .5 + r() * .9; return [q * Math.cos(a) * sp, u * sp, q * Math.sin(a) * sp] as const; });
+    return { x: CENTER[0] + (r() - .5) * 11, z: CENTER[1] + (r() - .5) * 7 - 1, h: 3.2 + r() * 2.2, off: r() * CYCLE, col, dirs }; }); }, []);
+  const geo = useMemo(() => { const g = new THREE.BufferGeometry(), n = SHELLS * (SPARKS + 1); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3)); g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(n * 3), 3)); return g; }, []);
+  useFrame(st => { const pos = geo.attributes.position as THREE.BufferAttribute, col = geo.attributes.color as THREE.BufferAttribute; let k = 0;
+    for (const s of shells) { const ph = (st.clock.elapsedTime + s.off) % CYCLE;
+      // rocket
+      if (ph < RISE) { const t = ph / RISE; pos.setXYZ(k, s.x, 0.4 + (s.h - .4) * (1 - (1 - t) ** 2), s.z); col.setXYZ(k, 1, .8, .5); } else { pos.setXYZ(k, 0, -50, 0); }
+      k++;
+      const e = ph - RISE, on = e >= 0 && e < BURN, fade = on ? Math.max(0, 1 - e / BURN) ** 1.5 : 0;
+      for (const d of s.dirs) { if (on) { pos.setXYZ(k, s.x + d[0] * e * 1.5, s.h + d[1] * e * 1.5 - .5 * e * e, s.z + d[2] * e * 1.5); col.setXYZ(k, s.col.r * fade, s.col.g * fade, s.col.b * fade); } else pos.setXYZ(k, 0, -50, 0); k++; } }
+    pos.needsUpdate = true; col.needsUpdate = true; });
+  return <points ref={ref} geometry={geo} frustumCulled={false}><pointsMaterial size={.28} map={dot} vertexColors transparent depthWrite={false} blending={THREE.AdditiveBlending} sizeAttenuation toneMapped={false} /></points>;
+}
+/** Giant krathong + flame bowl always; krathong fleet, sky lanterns and fireworks only at night (real clock after 19:00, or the night button). */
+export function Festive() { const night = useMapStore(s => s.time === 'night'); return <><Symbols />{night && <><KrathongFleet /><KhomLoi /><Fireworks /></>}</>; }
 /** Blue "you are here" marker at the visitor's GPS position (only when it falls inside the diorama). */
 export function UserDot() {
   const pos = useMapStore(s => s.userPos), ref = useRef<THREE.Mesh>(null);
