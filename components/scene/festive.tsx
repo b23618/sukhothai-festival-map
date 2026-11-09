@@ -108,6 +108,7 @@ function Fireworks() {
   </>;
 }
 /** Rockets that burst into the festival title written in sparks (one rocket per line). Billboards around Y to face the camera. */
+const V0 = new THREE.Vector3(), V1 = new THREE.Vector3(), V2 = new THREE.Vector3();
 const SHOW_DELAY = 4; // seconds after the canvas mounts before any firework starts
 const TITLE = ['งานประเพณีลอยกระทง', 'เผาเทียน เล่นไฟ', 'จังหวัดสุโขทัย ปี 2569'], T_CYCLE = 15, T_RISE = 1.4, T_FORM = 1.2, T_HOLD = 5, T_FADE = 1.8, T_GAP = 1.1, T_W = 6, T_LH = .8;
 const T_TINT = ['#ffd24a', '#ff9a5a', '#ffe9b0'];
@@ -127,12 +128,17 @@ function TitleFireworks() {
   useFrame(st => {
     if (!data) return; const { pts, centre } = data, pos = geo.attributes.position as THREE.BufferAttribute, col = geo.attributes.color as THREE.BufferAttribute, el = st.clock.elapsedTime - SHOW_DELAY, time = el % T_CYCLE;
     geo.setDrawRange(0, el < 0 ? 0 : Infinity); if (el < 0) return;
-    const cam = st.camera.position, yaw = Math.atan2(cam.x - VENUE[0], cam.z - VENUE[1]), rx = Math.cos(yaw), rz = -Math.sin(yaw), fx = Math.sin(yaw), fz = Math.cos(yaw), BASE = 5.4, DEPTH = 0;
-    const put = (k: number, lx: number, ly: number, ld: number, r_: number, g_: number, b_: number) => { pos.setXYZ(k, VENUE[0] + lx * rx + (ld + DEPTH) * fx, BASE + ly, VENUE[1] + lx * rz + (ld + DEPTH) * fz); col.setXYZ(k, r_, g_, b_); };
+    const cam = st.camera.position, yaw = Math.atan2(cam.x - VENUE[0], cam.z - VENUE[1]), rx = Math.cos(yaw), rz = -Math.sin(yaw), fx = Math.sin(yaw), fz = Math.cos(yaw), BASE0 = 5.4, DEPTH = 0, HH = TITLE.length * T_LH / 2;
+    // Fit the whole title on screen whatever the camera: shrink to the view width and slide down if the top would be cut off.
+    const c0 = V0.set(VENUE[0] + DEPTH * fx, BASE0, VENUE[1] + DEPTH * fz).project(st.camera), cx = c0.x, cy = c0.y;
+    const r0 = V1.set(VENUE[0] + DEPTH * fx + rx * T_W / 2, BASE0, VENUE[1] + DEPTH * fz + rz * T_W / 2).project(st.camera), u0 = V2.set(VENUE[0] + DEPTH * fx, BASE0 + HH, VENUE[1] + DEPTH * fz).project(st.camera);
+    const sc = Math.min(1, .42 / Math.max(.05, Math.abs(r0.x - cx))), perUnit = Math.max(.01, (u0.y - cy) / HH), top = cy + HH * sc * perUnit;
+    const base = BASE0 - Math.max(0, top - .8) / perUnit, sh = .2 / Math.max(.01, Math.abs(r0.x - cx) / (T_W / 2)); // shift right so the left-hand control panel never covers the title
+    const put = (k: number, lx: number, ly: number, ld: number, r_: number, g_: number, b_: number) => { pos.setXYZ(k, VENUE[0] + (lx * sc + sh) * rx + (ld + DEPTH) * fx, base + ly * sc, VENUE[1] + (lx * sc + sh) * rz + (ld + DEPTH) * fz); col.setXYZ(k, r_, g_, b_); };
     const ease = (t: number) => 1 - (1 - Math.min(1, Math.max(0, t))) ** 3; let k = 0;
     // rockets
     for (let l = 0; l < TITLE.length; l++) { const t = (time - l * T_GAP) / T_RISE;
-      for (let j = 0; j < 9; j++) { const tt = t - j * .035; if (tt > 0 && t < 1) { const f = (1 - j / 9) ** 1.6, y0 = -BASE + .4; put(k, Math.sin(tt * 40 + j) * .03, y0 + (centre[l] - y0) * (1 - (1 - tt) ** 2), 0, f, .75 * f, .4 * f); } else { pos.setXYZ(k, 0, -50, 0); col.setXYZ(k, 0, 0, 0); } k++; } }
+      for (let j = 0; j < 9; j++) { const tt = t - j * .035; if (tt > 0 && t < 1) { const f = (1 - j / 9) ** 1.6, y0 = (-base + .4) / sc; put(k, Math.sin(tt * 40 + j) * .03, y0 + (centre[l] - y0) * (1 - (1 - tt) ** 2), 0, f, .75 * f, .4 * f); } else { pos.setXYZ(k, 0, -50, 0); col.setXYZ(k, 0, 0, 0); } k++; } }
     for (const p of pts) { const e = time - p.l * T_GAP - T_RISE, c = tint[p.l];
       if (e < 0 || e > T_FORM + T_HOLD + T_FADE) { pos.setXYZ(k, 0, -50, 0); col.setXYZ(k, 0, 0, 0); k++; continue; }
       const m = ease(e / T_FORM), fe = Math.max(0, e - T_FORM - T_HOLD), fade = 1 - fe / T_FADE, hot = Math.max(0, 1 - e * 1.4), tw = e > T_FORM ? .8 + .2 * Math.sin(e * 22 + p.ph) : 1, droop = fe * fe * .35;
