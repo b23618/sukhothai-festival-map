@@ -1,8 +1,8 @@
 'use client';
 import dynamic from 'next/dynamic';
-import {useEffect,useMemo,useState} from 'react';
-import {ListChecks, Layers, ChevronDown, ChevronUp, Search, MapPin, Landmark, CalendarDays, Wrench, Menu, X, Plus, Minus, Download, Navigation, Languages, Info, LocateFixed, Sun, Sunset, Moon, Box, ArrowDownToLine,} from 'lucide-react';
-import {pointWorld,seriesLabel,type Category,type Point} from '@/data/points';
+import {useEffect,useMemo,useRef,useState} from 'react';
+import {ListChecks, Layers, ChevronDown, ChevronUp, Search, MapPin, Landmark, CalendarDays, Wrench, Menu, X, Plus, Minus, Download, Navigation, Languages, Check, Info, LocateFixed, Sun, Sunset, Moon, Box, ArrowDownToLine,} from 'lucide-react';
+import {pointWorld,seriesLabel,type Category,type Language,type Point} from '@/data/points';
 import {useMapStore,type TimeOfDay} from '@/store/useMapStore';
 import PlaceMap from './PlaceMap';
 import RoutePanel from './RoutePanel';
@@ -22,6 +22,15 @@ const categories:('all'|Category)[]=['all','landmark','activity','facility'];
 const types:Record<'all'|Category,typeof Landmark>={all:MapPin,landmark:Landmark,activity:CalendarDays,facility:Wrench};
 const catLabel=(ui:any,c:Category,lang:'th'|'en'|'zh',series?:'festival'|'culture')=>c==='activity'?(series?seriesLabel[series][lang]:ui.activity):c==='facility'?ui.facility:ui.landmark;
 const times:[TimeOfDay,typeof Sun][]=[['day',Sun],['golden',Sunset],['night',Moon]];
+const LANGS:{k:Language;name:string;badge:string}[]=[{k:'th',name:'ไทย',badge:'ก'},{k:'en',name:'English',badge:'A'},{k:'zh',name:'中文',badge:'文'}];
+function LangMenu({lang,onPick}:{lang:Language;onPick:(l:Language)=>void}){
+ const [open,setOpen]=useState(false);const ref=useRef<HTMLDivElement>(null);
+ useEffect(()=>{if(!open)return;const out=(e:MouseEvent)=>{if(!ref.current?.contains(e.target as Node))setOpen(false)},esc=(e:KeyboardEvent)=>{if(e.key==='Escape')setOpen(false)};document.addEventListener('mousedown',out);document.addEventListener('keydown',esc);return()=>{document.removeEventListener('mousedown',out);document.removeEventListener('keydown',esc)}},[open]);
+ const cur=LANGS.find(l=>l.k===lang)!;
+ return <div ref={ref} className="relative"><button type="button" aria-label="Language" aria-haspopup="listbox" aria-expanded={open} onClick={()=>setOpen(v=>!v)} className="flex items-center gap-1.5 rounded-xl border border-[#e9e9e0] bg-white px-3 py-2 text-[13px] max-md:px-2 max-md:py-[7px] max-md:text-[11px]"><Languages size={16}/><span>{cur.name}</span><ChevronDown size={13} className={open?'rotate-180':''}/></button>
+  {open&&<ul role="listbox" className="absolute right-0 top-[calc(100%+6px)] z-50 m-0 min-w-[150px] list-none rounded-xl border border-[#e9e9e0] bg-white p-1 shadow-lg">{LANGS.map(l=><li key={l.k} role="option" aria-selected={l.k===lang}><button type="button" onClick={()=>{onPick(l.k);setOpen(false)}} className={`flex w-full items-center gap-2.5 rounded-lg border-0 px-2.5 py-2 text-left text-[13px] ${l.k===lang?'bg-[#eef5f0] font-semibold text-[#176c54]':'bg-white text-[#172a24] hover:bg-[#f6f6f0]'}`}><span className="grid h-6 w-6 place-items-center rounded-full bg-[#176c54] text-[12px] font-bold text-white">{l.badge}</span><span className="flex-1">{l.name}</span>{l.k===lang&&<Check size={15}/>}</button></li>)}</ul>}
+ </div>;
+}
 export default function FestivalExplorer(){
  const S=useMapStore();const [about,setAbout]=useState(false);const {lang,points,query,category,selectedId,time,mobileList,gpsMessage}=S;
  const ui=translations[lang];const [more,setMore]=useState(false);const [legend,setLegend]=useState(false);useEffect(()=>{setMore(false)},[selectedId]);const sheetBusy=!!(S.routeFrom||S.routeTo)||gpsMessage||S.locState!=='off'||legend;
@@ -31,7 +40,7 @@ export default function FestivalExplorer(){
  const categoryButtons=categories.map(c=>{const Icon=types[c];return <button key={c} className={`filter ${category===c?'on':''}`} onClick={()=>S.setCategory(c)}><Icon size={16}/>{ui[c]}</button>});
  return <main className="shell">
  <header className="topbar"><div className="brand"><span className="brand-icon">✦</span><div className="min-w-0"><h1 className="max-md:truncate">{ui.brand}</h1><p className="max-md:hidden">{ui.sub}</p></div></div>
- <div className="header-actions"><button className="flex items-center gap-1.5 rounded-xl border border-[#e9e9e0] bg-white px-3 py-2 text-[13px]" aria-label={ui.festival} onClick={()=>setAbout(true)}><Info size={16}/><span className="max-md:hidden">{ui.festival}</span></button><label className="lang-control"><Languages size={16}/><select value={lang} onChange={e=>S.setLang(e.target.value as any)} aria-label="Language"><option value="th">ไทย</option><option value="en">English</option><option value="zh">中文</option></select></label><button className="mobile-menu" onClick={()=>S.setMobileList(!mobileList)} aria-label="Menu">{mobileList?<X/>:<Menu/>}</button></div></header>
+ <div className="header-actions"><button className="flex items-center gap-1.5 rounded-xl border border-[#e9e9e0] bg-white px-3 py-2 text-[13px]" aria-label={ui.festival} onClick={()=>setAbout(true)}><Info size={16}/><span className="max-md:hidden">{ui.festival}</span></button><LangMenu lang={lang} onPick={S.setLang}/><button className="mobile-menu" onClick={()=>S.setMobileList(!mobileList)} aria-label="Menu">{mobileList?<X/>:<Menu/>}</button></div></header>
  <div className="workspace">
  <aside className={`sidebar ${mobileList?'show':''}`}><div className="sidebar-head"><div className="eyebrow">EXPLORE SUKHOTHAI</div><h2>{ui.explore}</h2><div className="search-box"><Search size={19}/><input value={query} onChange={e=>S.setQuery(e.target.value)} placeholder={ui.search}/>{query&&<button onClick={()=>S.setQuery('')} aria-label={ui.close}><X size={16}/></button>}</div></div>
  <div className="filters">{categoryButtons}</div><div className="list-caption">{filtered.length} {ui.count}</div>
