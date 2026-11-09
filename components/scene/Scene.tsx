@@ -15,6 +15,7 @@ import { OsmGround, Roads, Terrain, Vegetation, Water } from './environment';
 import { HeritageAt } from './heritage';
 import { Festive, UserDot } from './festive';
 import { Emblem } from './symbols';
+import { LOW } from '@/lib/perf';
 import { inDiorama } from '@/lib/georef';
 import { endpoint } from '@/lib/route';
 import { Facility, Festival } from './structures';
@@ -123,7 +124,7 @@ function World() {
   </>;
 }
 export default function Scene() {
-  return <div className="absolute inset-0 isolate"><Canvas shadows dpr={[1, 1.75]} camera={{ position: [...VIEWS.overview.pos], fov: 32, near: .3, far: 200 }} onCreated={({ camera }) => camera.lookAt(...VIEWS.overview.tgt)} gl={{ antialias: true, powerPreference: 'high-performance' }} style={{ touchAction: 'none' }}>
+  return <div className="absolute inset-0 isolate"><Canvas shadows={!LOW} dpr={LOW ? [1, 1.25] : [1, 1.75]} camera={{ position: [...VIEWS.overview.pos], fov: 32, near: .3, far: 200 }} onCreated={({ camera }) => camera.lookAt(...VIEWS.overview.tgt)} gl={{ antialias: !LOW, powerPreference: 'high-performance' }} style={{ touchAction: 'none' }}>
     <Suspense fallback={null}><World /></Suspense>
   </Canvas><Pins /></div>;
 }

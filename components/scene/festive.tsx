@@ -11,6 +11,7 @@ import { geoToGrid, inDiorama } from '@/lib/georef';
 import { WATER_Y, heightAt, pondAt } from '@/lib/terrain';
 import { glowMaterials } from './materials';
 import { useMapStore } from '@/store/useMapStore';
+import { LOW } from '@/lib/perf';
 // Decorative Loy Krathong layer. Krathong / khom loi are drawn larger than life so they read at map scale. These are generic festival
 // symbols, NOT documented installations of the 2569 event (only the royal-flame ceremony, held outside the park, is an official activity).
 const flame = new THREE.MeshBasicMaterial({ color: '#ffb23a', toneMapped: false });
@@ -72,7 +73,7 @@ function Symbols() {
 }
 /** Firework shells: rocket climbs, bursts into ~100 fading sparks that fall under gravity. Night only. */
 const dot = (() => { if (typeof document === 'undefined') return null; const c = document.createElement('canvas'); c.width = c.height = 32; const x = c.getContext('2d')!, g = x.createRadialGradient(16, 16, 0, 16, 16, 16); g.addColorStop(0, '#fff'); g.addColorStop(.35, 'rgba(255,255,255,.8)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 32, 32); return new THREE.CanvasTexture(c); })();
-const SHELLS = 8, SPARKS = 110, TRAIL = 5, CYCLE = 9, RISE = 1.2, DRAG = 1.7, PER = 1 + 8 + SPARKS * TRAIL;
+const SHELLS = LOW ? 5 : 8, SPARKS = LOW ? 60 : 110, TRAIL = LOW ? 3 : 5, CYCLE = 9, RISE = 1.2, DRAG = 1.7, PER = 1 + 8 + SPARKS * TRAIL;
 const COLORS = [['#ff4d4d', '#ffd24a'], ['#4dd2ff', '#ffffff'], ['#7dff6a', '#ffe36a'], ['#ff7be0', '#9a6bff'], ['#ffc34a', '#ffc34a'], ['#ff9a3a', '#ff4d4d']];
 type Kind = 'peony' | 'ring' | 'willow';
 const KINDS: Kind[] = ['peony', 'willow', 'ring', 'peony', 'willow', 'peony', 'ring', 'willow'];
@@ -118,7 +119,7 @@ function TitleFireworks() {
     const W = 1400, LH = 190, c = document.createElement('canvas'); c.width = W; c.height = LH * TITLE.length;
     const x = c.getContext('2d')!; x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle';
     TITLE.forEach((t, l) => { let size = 150; x.font = `700 ${size}px "Noto Sans Thai","Sarabun",Thonburi,Tahoma,sans-serif`; const w = x.measureText(t).width; if (w > W - 40) { size *= (W - 40) / w; x.font = `700 ${size}px "Noto Sans Thai","Sarabun",Thonburi,Tahoma,sans-serif`; } x.fillText(t, W / 2, LH * l + LH / 2); });
-    const img = x.getImageData(0, 0, W, c.height).data, r = mulberry32(69), pts: { l: number; tx: number; ty: number; sx: number; sy: number; sz: number; ph: number }[] = [], step = 4, sc = T_W / W;
+    const img = x.getImageData(0, 0, W, c.height).data, r = mulberry32(69), pts: { l: number; tx: number; ty: number; sx: number; sy: number; sz: number; ph: number }[] = [], step = LOW ? 6 : 4, sc = T_W / W;
     for (let py = 0; py < c.height; py += step) for (let px = 0; px < W; px += step) if (img[(py * W + px) * 4 + 3] > 128) { const l = Math.floor(py / LH); pts.push({ l, tx: (px - W / 2) * sc, ty: (TITLE.length / 2 - py / LH) * T_LH, sx: 0, sy: 0, sz: (r() - .5) * .08, ph: r() * 6.283 }); }
     const centre = TITLE.map((_, l) => (TITLE.length / 2 - (l + .5)) * T_LH);
     return { pts, centre };
@@ -182,7 +183,7 @@ function LandmarkLights() {
     return <group key={p.id} position={[x, y, z]}><pointLight color="#ffb05a" intensity={.9} distance={2.6} decay={1.6} position={[.5, .5, .6]} /><pointLight color="#ff9a3a" intensity={.4} distance={1.8} decay={1.6} position={[-.5, .3, -.4]} /></group>; })}</>;
 }
 /** Festival-goers: small low-poly figures (drawn larger than life so they read at map scale) strolling back and forth along the OSM paths near the venue. Decorative, not real crowd data. */
-const WALKERS = 110, SHIRTS = ['#ff6b8b', '#ffd24a', '#4dc3ff', '#7ddc6a', '#ff9a3a', '#b48cff', '#ffffff', '#ff5a4a', '#3fd2c7'], SKINS = ['#f1c9a0', '#d9a273', '#b9825a', '#8d5a3a'];
+const WALKERS = LOW ? 50 : 110, SHIRTS = ['#ff6b8b', '#ffd24a', '#4dc3ff', '#7ddc6a', '#ff9a3a', '#b48cff', '#ffffff', '#ff5a4a', '#3fd2c7'], SKINS = ['#f1c9a0', '#d9a273', '#b9825a', '#8d5a3a'];
 const SC = new THREE.Vector3(1.6, 1.6, 1.6);
 function Crowd() {
   const body = useRef<THREE.InstancedMesh>(null), head = useRef<THREE.InstancedMesh>(null);
@@ -208,7 +209,7 @@ function Crowd() {
   </>;
 }
 /** Giant krathong + flame bowl always; krathong fleet, sky lanterns and fireworks only at night (real clock after 19:00, or the night button). */
-export function Festive() { const night = useMapStore(s => s.time === 'night'); return <><Symbols /><Crowd />{night && <><PlaceGlow /><LandmarkLights /><KrathongFleet /><KhomLoi /><Fireworks /><TitleFireworks /></>}</>; }
+export function Festive() { const night = useMapStore(s => s.time === 'night'); return <><Symbols /><Crowd />{night && <><PlaceGlow />{!LOW && <LandmarkLights />}<KrathongFleet /><KhomLoi /><Fireworks /><TitleFireworks /></>}</>; }
 /** Blue "you are here" marker at the visitor's GPS position (only when it falls inside the diorama). */
 export function UserDot() {
   const pos = useMapStore(s => s.userPos), ref = useRef<THREE.Mesh>(null);

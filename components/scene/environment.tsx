@@ -1,4 +1,5 @@
 'use client';
+import { LOW } from '@/lib/perf';
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -20,7 +21,7 @@ const g2 = (x: number, z: number): Pt => [(x / WORLD_W + .5) * 1000, (z / WORLD_
 /** Continuous terrain with vertex-coloured zones, pond basins, island mounds and a soil "diorama" skirt. */
 export function Terrain() {
   const { top, skirt } = useMemo(() => {
-    const nx = 360, nz = 340, pos: number[] = [], col: number[] = [], idx: number[] = [], hs: number[][] = [];
+    const nx = LOW ? 240 : 360, nz = LOW ? 226 : 340, pos: number[] = [], col: number[] = [], idx: number[] = [], hs: number[][] = [];
     for (let j = 0; j <= nz; j++) { hs.push([]); for (let i = 0; i <= nx; i++) {
       const x = BOUNDS.x0 + i / nx * TW, z = BOUNDS.z0 + j / nz * TH, [gx, gy] = g2(x, z), h = heightAt(gx, gy);
       let pd = 1e9; for (const s of sites) pd = Math.min(pd, Math.hypot(gx - s[0], gy - s[1]));

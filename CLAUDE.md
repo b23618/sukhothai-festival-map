@@ -44,6 +44,8 @@ Coordinates, shapes and all 3D models are artistic approximations. Activity name
 
 ## Mobile layout
 
+Performance: `lib/perf.ts` exports `LOW` (coarse pointer or width < 768). On LOW the scene drops shadows, MSAA, landmark point lights, lowers DPR (≤1.25), terrain resolution, firework/walker counts. Keep new heavy effects behind `LOW`.
+
 Below 768 px (`max-md:` + the `@media(max-width:760px)` blocks at the end of `app/globals.css`): compact header (icon-only info button), icon-only view buttons, no status chip/instructions/footer note, and ONE bottom sheet at a time — route panel > GPS panel > detail card (detail card is collapsed to title/description/walk buttons with a "more details" toggle). Keep new overlays inside that priority scheme.
 
 ## Conventions
