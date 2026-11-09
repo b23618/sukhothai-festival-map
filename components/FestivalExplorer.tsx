@@ -68,6 +68,6 @@ export default function FestivalExplorer(){
   <h3 className="mb-1 mt-4 text-[13px]">{ui.timeline}</h3><ul className="m-0 list-none space-y-1.5 p-0 text-[12px] leading-5">{festival.timeline.map((e,i)=><li key={i}><b>{e.date[lang]}</b> — {e.text[lang]}</li>)}</ul><div className="mt-2 text-[11px]"><a className="underline" target="_blank" rel="noreferrer" href={mapsOpenUrl(festival.flameCeremony,lang)}>{ui.flame}</a> · {festival.lightSound[lang]}</div>
   <h3 className="mb-1 mt-4 text-[13px]">{{th:'การเดินทางและที่จอดรถ',en:'Getting there & parking',zh:'交通与停车'}[lang]}</h3><div className="text-[12px] leading-5"><p className="m-0">{places.shuttle[lang]}</p><ul className="m-0 mt-1 list-disc pl-5">{places.hubs.map((h,i)=><li key={i}>{h[lang]}</li>)}</ul><div className="mt-1.5 flex flex-wrap gap-1.5">{places.contacts.map((c,i)=><a key={i} href={`tel:${c.tel}`} className="rounded-full border border-[#e3e3da] bg-[#fafaf6] px-2 py-0.5 text-[11px] no-underline">{c.label[lang]} {c.tel}</a>)}</div><a className="mt-1 inline-block text-[10px] underline" href={places.source.url} target="_blank" rel="noreferrer">{places.source.label}</a></div>
   <p className="rounded-lg bg-[#fff4dc] p-2 text-[11px] text-[#92691e]">{festival.note[lang]}</p>
-  <PlaceMap geo={festival.center} lang={lang} zoom={16}/></div></div>}
+  <PlaceMap geo={festival.center} lang={lang}/></div></div>}
  </main>;
 }
