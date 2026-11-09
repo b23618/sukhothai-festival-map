@@ -12,10 +12,10 @@ const T = {
   zh: { title: '您的当前位置', asking: '正在请求权限并定位…（请在浏览器中允许位置访问）', denied: '位置权限被拒绝。请在浏览器中允许本网站使用位置后重试。', unsupported: '此浏览器不支持定位。', acc: '精度 ±', toVenue: '距活动中心', inside: '您在活动区域内 — 地图上的蓝点', outside: '位于3D地图范围之外，仍可从此处规划步行路线', stop: '关闭定位', privacy: '位置仅在此浏览器中使用，不会上传或保存。' },
 } satisfies Record<Language, unknown>;
 export default function GpsPanel() {
-  const { lang, locState, userPos, gpsMessage, setGps, stopLocate } = useMapStore(), t = T[lang], r = R[lang];
+  const { lang, locState, userPos, gpsMessage, setGps, stopLocate, routeFrom, routeTo } = useMapStore(), routeOpen = !!(routeFrom || routeTo), t = T[lang], r = R[lang];
   if (!gpsMessage && locState === 'off') return null;
   const to = userPos ? walkInfo(userPos, festival.center) : null, inside = to && to.d < 900;
-  return <div className="absolute right-[72px] top-[77px] z-20 w-[min(300px,75%)] rounded-xl bg-white p-3.5 text-[12px] leading-[1.6] shadow-xl">
+  return <div className={`absolute right-[72px] top-[77px] z-20 w-[min(300px,75%)] rounded-xl bg-white p-3.5 text-[12px] leading-[1.6] shadow-xl max-md:inset-x-2 max-md:bottom-2 max-md:top-auto max-md:w-auto ${routeOpen?'max-md:hidden':''}`}>
     <div className="mb-1 flex items-center justify-between"><b className="flex items-center gap-1.5"><LocateFixed size={14} className="text-[#2b7bff]" />{t.title}</b><button className="border-0 bg-transparent p-0" aria-label={r.close} onClick={() => setGps(false)}><X size={15} /></button></div>
     {locState === 'asking' && <div className="text-[#92691e]">{t.asking}</div>}
     {locState === 'denied' && <div className="text-[#b04a1f]">{t.denied}</div>}

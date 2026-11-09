@@ -37,6 +37,10 @@ Gotchas: pins are a plain DOM overlay projected every frame by `PinProjector` â€
 
 Coordinates, shapes and all 3D models are artistic approximations. Activity names are official but English/Chinese are translations; `schedule` is null; Chinese text is marked `zhStatus:'pending'`. Do not invent real activity names, schedules or historical claims. GPS button intentionally shows a "not available" notice.
 
+## Mobile layout
+
+Below 768 px (`max-md:` + the `@media(max-width:760px)` blocks at the end of `app/globals.css`): compact header (icon-only info button), icon-only view buttons, no status chip/instructions/footer note, and ONE bottom sheet at a time â€” route panel > GPS panel > detail card (detail card is collapsed to title/description/walk buttons with a "more details" toggle). Keep new overlays inside that priority scheme.
+
 ## Conventions
 
 - Path alias `@/*` maps to repo root.

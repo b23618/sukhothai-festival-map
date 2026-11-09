@@ -19,7 +19,7 @@ export default function RoutePanel() {
   const me = <option value={ME}>📍 {s.me}</option>;
   const sel = 'w-full rounded-lg border border-[#dddeda] bg-[#fafaf8] px-2 py-1.5 text-[12px]', btn = 'inline-flex items-center gap-1.5 rounded-lg border border-[#e3e3da] bg-[#fafaf6] px-2.5 py-1.5 text-[11px] text-[#2f4a3e] no-underline hover:bg-[#f0f4ec]';
   const waiting = (routeFrom === ME || routeTo === ME) && !userPos;
-  return <aside aria-label={s.title} className="absolute right-5 top-[196px] z-20 max-h-[55%] w-[300px] overflow-y-auto rounded-2xl bg-white p-3.5 shadow-xl max-md:left-3 max-md:right-3 max-md:top-[120px] max-md:w-auto">
+  return <aside aria-label={s.title} className="absolute right-5 top-[196px] z-20 max-h-[55%] w-[300px] overflow-y-auto rounded-2xl bg-white p-3.5 shadow-xl max-md:inset-x-2 max-md:bottom-2 max-md:top-auto max-md:max-h-[60%] max-md:w-auto">
     <div className="mb-2 flex items-center justify-between"><b className="flex items-center gap-1.5 text-[13px]"><Footprints size={15} />{s.title}</b><button className="rounded-full border-0 bg-[#f4f5f2] p-1" aria-label={s.close} onClick={clearRoute}><X size={15} /></button></div>
     <label className="block text-[10px] font-bold uppercase text-[#8a9189]">{s.from}</label>
     <select className={sel} value={routeFrom ?? ''} onChange={e => { setRoute(e.target.value || null); if (e.target.value === ME) locate(); }}><option value="">{s.pick}</option>{me}{opts}</select>
