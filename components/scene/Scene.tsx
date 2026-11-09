@@ -18,6 +18,8 @@ import { Emblem } from './symbols';
 import { LOW } from '@/lib/perf';
 import { inDiorama } from '@/lib/georef';
 import { endpoint } from '@/lib/route';
+import { walkRoute } from '@/lib/pathfind';
+import type { Pt } from '@/lib/geo';
 import { Facility, Festival } from './structures';
 
 const LOOK: Record<TimeOfDay, { sun: string; sunI: number; sunPos: [number, number, number]; hemiSky: string; hemiGround: string; hemiI: number; top: string; hor: string; glow: number }> = {
@@ -76,8 +78,14 @@ function Scenery() { return <>{scenery.map(s => { return <HeritageAt key={s.id} 
 function RouteLine() {
   const points = useMapStore(s => s.points), fromId = useMapStore(s => s.routeFrom), toId = useMapStore(s => s.routeTo), user = useMapStore(s => s.userPos);
   const a = endpoint(fromId, points, user), b = endpoint(toId, points, user), ak = a?.grid.join(), bk = b?.grid.join();
-  const pts = useMemo(() => { if (!a || !b || fromId === toId) return null; const n = 48; return Array.from({ length: n + 1 }, (_, i) => { const t = i / n, gx = a.grid[0] + (b.grid[0] - a.grid[0]) * t, gy = a.grid[1] + (b.grid[1] - a.grid[1]) * t, [x, z] = toWorld(gx, gy); return new THREE.Vector3(x, Math.max(heightAt(gx, gy), WATER_Y) + .12, z); }); }, [ak, bk, fromId, toId]); // eslint-disable-line react-hooks/exhaustive-deps
-  return pts ? <Line points={pts} color="#ff7a1a" lineWidth={4} dashed dashSize={.12} gapSize={.07} renderOrder={6} /> : null;
+  const pts = useMemo(() => { if (!a || !b || fromId === toId) return null; const r = walkRoute(a.grid, b.grid); return { dashed: !r.onPaths, v: r.pts.flatMap((q, k, arr) => { const nx = arr[k + 1]; if (!nx) return [q]; const n = Math.max(1, Math.ceil(Math.hypot(nx[0] - q[0], nx[1] - q[1]) / 3)); return Array.from({ length: n }, (_, m) => [q[0] + (nx[0] - q[0]) * m / n, q[1] + (nx[1] - q[1]) * m / n] as Pt); }).map(([gx, gy]) => { const [x, z] = toWorld(gx, gy); return new THREE.Vector3(x, Math.max(heightAt(gx, gy), WATER_Y) + .12, z); }) }; }, [ak, bk, fromId, toId]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!pts) return null;
+  const ends = [pts.v[0], pts.v[pts.v.length - 1]], d = pts.dashed;
+  return <group>
+    <Line points={pts.v} color="#ffffff" lineWidth={LOW ? 9 : 11} dashed={d} dashSize={.12} gapSize={.07} depthTest={false} renderOrder={6} />
+    <Line points={pts.v} color="#e8175d" lineWidth={LOW ? 5 : 6} dashed={d} dashSize={.12} gapSize={.07} depthTest={false} renderOrder={7} />
+    {ends.map((e, i) => <mesh key={i} position={e} renderOrder={8}><sphereGeometry args={[.09, 16, 12]} /><meshBasicMaterial color={i ? '#e8175d' : '#1fa35a'} depthTest={false} /></mesh>)}
+  </group>;
 }
 const pinEls: Record<string, HTMLSpanElement | null> = {};
 /** DOM pin overlay (outside the Canvas). Positions are written every frame by PinProjector. */

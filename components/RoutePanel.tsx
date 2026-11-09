@@ -1,19 +1,19 @@
 'use client';
-import { ArrowLeft, ArrowUpDown, Clock, Compass, ExternalLink, Footprints, LocateFixed, Ruler, TriangleAlert, X } from 'lucide-react';
+import { ArrowLeft, ArrowUpDown, Clock, ExternalLink, Footprints, LocateFixed, Ruler, TriangleAlert, X } from 'lucide-react';
 import { mapsRouteUrl } from '@/lib/googleMaps';
 import { ME, WALK_LIMIT_M, endpoint, fmtDist, walkInfo } from '@/lib/route';
 import { useMapStore } from '@/store/useMapStore';
 import type { Language } from '@/data/points';
 
 export const L = {
-  th: { title: 'เส้นทางเดิน', from: 'จุดเริ่มต้น', to: 'ปลายทาง', pick: 'เลือกสถานที่…', me: 'ตำแหน่งของฉัน', waitGps: 'กำลังหาตำแหน่ง GPS…', swap: 'สลับ', close: 'ปิด', dist: 'ระยะทางตรง', walk: 'เดินประมาณ', dir: 'ทิศทาง', gm: 'นำทางเดินใน Google Maps', far: 'ไกลเกิน 5 กม. ไม่เหมาะกับการเดิน', approx: 'ระยะทางเป็นเส้นตรง คูณ 1.3 สำหรับทางเดินจริง เฉพาะเส้นทางเดินเท้า; จุดที่ไม่มี GPS ทางการประมาณจากผัง', same: 'เลือกสองจุดที่ต่างกัน', m: 'ม.', km: 'กม.', min: 'นาที', groups: { landmark: 'โบราณสถาน', activity: 'กิจกรรม', facility: 'บริการ' }, c: ['เหนือ', 'ตะวันออกเฉียงเหนือ', 'ตะวันออก', 'ตะวันออกเฉียงใต้', 'ใต้', 'ตะวันตกเฉียงใต้', 'ตะวันตก', 'ตะวันตกเฉียงเหนือ'], head: 'มุ่งหน้า' },
-  en: { title: 'Walking route', from: 'From', to: 'To', pick: 'Choose a place…', me: 'My location', waitGps: 'Finding GPS position…', swap: 'Swap', close: 'Close', dist: 'Straight-line', walk: 'Walk about', dir: 'Heading', gm: 'Walking directions in Google Maps', far: 'Over 5 km: too far to walk', approx: 'Straight-line distance; walking time adds 30% for real paths. Walking routes only. Points without official GPS are estimated from the plan.', same: 'Pick two different places', m: 'm', km: 'km', min: 'min', groups: { landmark: 'Heritage', activity: 'Activities', facility: 'Services' }, c: ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'], head: 'Head' },
-  zh: { title: '步行路线', from: '起点', to: '终点', pick: '选择地点…', me: '我的位置', waitGps: '正在获取GPS位置…', swap: '互换', close: '关闭', dist: '直线距离', walk: '步行约', dir: '方向', gm: '在谷歌地图查看步行路线', far: '超过5公里，不适合步行', approx: '为直线距离，步行时间按实际路径增加30%。仅提供步行路线；无官方GPS的地点由平面图估算。', same: '请选择两个不同地点', m: '米', km: '公里', min: '分钟', groups: { landmark: '古迹', activity: '活动', facility: '服务' }, c: ['北', '东北', '东', '东南', '南', '西南', '西', '西北'], head: '前往' },
+  th: { title: 'เส้นทางเดิน', from: 'จุดเริ่มต้น', to: 'ปลายทาง', pick: 'เลือกสถานที่…', me: 'ตำแหน่งของฉัน', waitGps: 'กำลังหาตำแหน่ง GPS…', swap: 'สลับ', close: 'ปิด', dist: 'ระยะทางตรง', walk: 'เดินประมาณ', dir: 'ทิศทาง', gm: 'นำทางเดินใน Google Maps', far: 'ไกลเกิน 5 กม. ไม่เหมาะกับการเดิน', same: 'เลือกสองจุดที่ต่างกัน', m: 'ม.', km: 'กม.', min: 'นาที', groups: { landmark: 'โบราณสถาน', activity: 'กิจกรรม', facility: 'บริการ' }, c: ['เหนือ', 'ตะวันออกเฉียงเหนือ', 'ตะวันออก', 'ตะวันออกเฉียงใต้', 'ใต้', 'ตะวันตกเฉียงใต้', 'ตะวันตก', 'ตะวันตกเฉียงเหนือ'], head: 'มุ่งหน้า' },
+  en: { title: 'Walking route', from: 'From', to: 'To', pick: 'Choose a place…', me: 'My location', waitGps: 'Finding GPS position…', swap: 'Swap', close: 'Close', dist: 'Straight-line', walk: 'Walk about', dir: 'Heading', gm: 'Walking directions in Google Maps', far: 'Over 5 km: too far to walk', same: 'Pick two different places', m: 'm', km: 'km', min: 'min', groups: { landmark: 'Heritage', activity: 'Activities', facility: 'Services' }, c: ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'], head: 'Head' },
+  zh: { title: '步行路线', from: '起点', to: '终点', pick: '选择地点…', me: '我的位置', waitGps: '正在获取GPS位置…', swap: '互换', close: '关闭', dist: '直线距离', walk: '步行约', dir: '方向', gm: '在谷歌地图查看步行路线', far: '超过5公里，不适合步行', same: '请选择两个不同地点', m: '米', km: '公里', min: '分钟', groups: { landmark: '古迹', activity: '活动', facility: '服务' }, c: ['北', '东北', '东', '东南', '南', '西南', '西', '西北'], head: '前往' },
 } satisfies Record<Language, unknown>;
 const routeHint = {
-  th: { line: 'เส้นประบนแผนที่แสดงทิศทางตรง ไม่ใช่ทางเดินจริง', back: 'กลับไปดูสถานที่' },
-  en: { line: 'The dotted line shows direction only, not a walkable path', back: 'Back to place details' },
-  zh: { line: '地图虚线仅示意方向，并非实际步行道路', back: '返回地点详情' },
+  th: { back: 'กลับไปดูสถานที่' },
+  en: { back: 'Back to place details' },
+  zh: { back: '返回地点详情' },
 };
 export const compass = (lang: Language, brg: number) => L[lang].c[Math.round(brg / 45) % 8];
 export default function RoutePanel() {
@@ -36,11 +36,9 @@ export default function RoutePanel() {
     {a && b && info && <div className="mt-3 space-y-1.5 text-[12px] text-[#33463d]">
       <div className="flex items-center gap-2"><Ruler size={14} />{s.dist}: <b>{fmtDist(info.d, s.m, s.km)}</b></div>
       <div className="flex items-center gap-2"><Clock size={14} />{s.walk}: <b>{info.walkMin} {s.min}</b></div>
-      <div className="flex items-center gap-2"><Compass size={14} />{s.dir}: <b>{s.head}{lang === 'en' ? ' ' : ''}{compass(lang, info.brg)}</b> ({Math.round(info.brg)}°)</div>
       {info.d > WALK_LIMIT_M && <div className="flex items-center gap-1.5 text-[11px] text-[#b04a1f]"><TriangleAlert size={13} />{s.far}</div>}
       <div className="pt-1"><a className={`${btn} map-action-link w-full !border-[#176b53] !bg-[#176b53]`} target="_blank" rel="noreferrer" href={mapsRouteUrl(a.geo, b.geo, lang)}><Footprints size={15} />{s.gm} <ExternalLink size={12} /></a></div>
-      <div className="rounded-lg bg-[#fff4dc] px-2.5 py-2 text-[11px] text-[#80591b]">{routeHint[lang].line}</div>
-      <div className="text-[10px] text-[#9a9384]">{s.approx}</div></div>}
+</div>}
     {selectedId&&<button className="mt-2 flex min-h-11 w-full items-center justify-center gap-1 border-0 bg-transparent text-[12px] font-semibold text-[#176b53] md:hidden" onClick={clearRoute}><ArrowLeft size={15}/>{routeHint[lang].back}</button>}
   </aside>;
 }

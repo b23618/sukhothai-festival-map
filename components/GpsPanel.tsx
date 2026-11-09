@@ -3,7 +3,6 @@ import { LocateFixed, X } from 'lucide-react';
 import type { Language } from '@/data/points';
 import { festival } from '@/data/festival';
 import { useMapStore } from '@/store/useMapStore';
-import { compass } from './RoutePanel';
 import { L as R } from './RoutePanel';
 import { fmtDist, walkInfo } from '@/lib/route';
 const T = {
@@ -21,7 +20,7 @@ export default function GpsPanel() {
     {locState === 'denied' && <div className="text-[#b04a1f]">{t.denied}</div>}
     {locState === 'unsupported' && <div className="text-[#b04a1f]">{t.unsupported}</div>}
     {userPos && to && <div className="space-y-0.5 text-[#33463d]"><div>{userPos.lat.toFixed(5)}, {userPos.lng.toFixed(5)}</div><div className="text-[#7b857d]">{t.acc}{Math.round(userPos.acc)} {r.m}</div>
-      <div>{t.toVenue}: <b>{fmtDist(to.d, r.m, r.km)}</b> ({compass(lang, to.brg)})</div><div className="text-[#2f6a54]">{inside ? t.inside : t.outside}</div></div>}
+      <div>{t.toVenue}: <b>{fmtDist(to.d, r.m, r.km)}</b></div><div className="text-[#2f6a54]">{inside ? t.inside : t.outside}</div></div>}
     {locState !== 'off' && <button className="mt-2 rounded-lg border border-[#e3e3da] bg-[#fafaf6] px-2.5 py-1 text-[11px]" onClick={() => { stopLocate(); setGps(false); }}>{t.stop}</button>}
     <div className="mt-1.5 text-[10px] text-[#9a9384]">{t.privacy}</div>
   </div>;
