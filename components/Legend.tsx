@@ -16,10 +16,10 @@ const ITEMS: { k: SymbolKind; icon: string; t: Record<Language, string> }[] = [
 ];
 const T = { th: ['สัญลักษณ์บนแผนที่', 'สัญลักษณ์เป็นภาพประกอบ ไม่ได้บอกตำแหน่งจริงของสิ่งก่อสร้าง'], en: ['Map symbols', 'Symbols are illustrative icons, not surveyed structures'], zh: ['地图符号', '符号仅为示意图标，不代表实际建筑'] } satisfies Record<Language, [string, string]>;
 export default function Legend({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { lang, routeFrom, routeTo, gpsMessage, locState } = useMapStore(), busy = !!(routeFrom || routeTo) || gpsMessage || locState !== 'off';
+  const { lang, routeFrom, routeTo, gpsMessage } = useMapStore(), busy = !!(routeFrom || routeTo) || gpsMessage;
   if (!open) return null;
   return <aside aria-label={T[lang][0]} className={`absolute right-[72px] top-[130px] z-30 max-h-[60%] w-[300px] overflow-y-auto rounded-2xl bg-white p-3.5 shadow-xl max-md:inset-x-2 max-md:bottom-2 max-md:top-auto max-md:w-auto ${busy ? 'max-md:hidden' : ''}`}>
-    <div className="mb-2 flex items-center justify-between"><b className="text-[13px]">{T[lang][0]}</b><button className="rounded-full border-0 bg-[#f4f5f2] p-1" aria-label="close" onClick={onClose}><X size={15} /></button></div>
+    <div className="mb-2 flex items-center justify-between"><b className="text-[13px]">{T[lang][0]}</b><button className="grid h-11 w-11 place-items-center rounded-full border-0 bg-[#f4f5f2]" aria-label={{th:'ปิด',en:'Close',zh:'关闭'}[lang]} onClick={onClose}><X size={17} /></button></div>
     <ul className="m-0 list-none space-y-1.5 p-0">{ITEMS.map(i => <li key={i.k} className="flex items-start gap-2.5 text-[12px] leading-5 text-[#33463d]"><span className="grid h-7 w-7 flex-none place-items-center rounded-lg bg-[#f6f3ea] text-[16px]">{i.icon}</span><span className="pt-0.5">{i.t[lang]}</span></li>)}</ul>
     <div className="mt-2 text-[10px] text-[#9a9384]">{T[lang][1]}</div>
   </aside>;

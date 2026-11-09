@@ -13,10 +13,10 @@ const T = {
 } satisfies Record<Language, unknown>;
 export default function GpsPanel() {
   const { lang, locState, userPos, gpsMessage, setGps, stopLocate, routeFrom, routeTo } = useMapStore(), routeOpen = !!(routeFrom || routeTo), t = T[lang], r = R[lang];
-  if (!gpsMessage && locState === 'off') return null;
+  if (!gpsMessage) return null;
   const to = userPos ? walkInfo(userPos, festival.center) : null, inside = to && to.d < 900;
   return <div className={`absolute right-[72px] top-[77px] z-20 w-[min(300px,75%)] rounded-xl bg-white p-3.5 text-[12px] leading-[1.6] shadow-xl max-md:inset-x-2 max-md:bottom-2 max-md:top-auto max-md:w-auto ${routeOpen?'max-md:hidden':''}`}>
-    <div className="mb-1 flex items-center justify-between"><b className="flex items-center gap-1.5"><LocateFixed size={14} className="text-[#2b7bff]" />{t.title}</b><button className="border-0 bg-transparent p-0" aria-label={r.close} onClick={() => setGps(false)}><X size={15} /></button></div>
+    <div className="mb-1 flex items-center justify-between"><b className="flex items-center gap-1.5"><LocateFixed size={14} className="text-[#2b7bff]" />{t.title}</b><button className="grid h-11 w-11 place-items-center border-0 bg-transparent" aria-label={r.close} onClick={() => setGps(false)}><X size={17} /></button></div>
     {locState === 'asking' && <div className="text-[#92691e]">{t.asking}</div>}
     {locState === 'denied' && <div className="text-[#b04a1f]">{t.denied}</div>}
     {locState === 'unsupported' && <div className="text-[#b04a1f]">{t.unsupported}</div>}

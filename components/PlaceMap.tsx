@@ -11,7 +11,7 @@ const L = {
 export default function PlaceMap({ geo, extra = [], lang }: { geo?: Geo; extra?: Geo[]; lang: Language }) {
   const s = L[lang];
   if (!geo) return <div className="mt-2 text-[11px] text-[#9a9384]">{s.noGeo}</div>;
-  const btn = 'inline-flex items-center gap-1.5 rounded-lg border border-[#e3e3da] bg-[#fafaf6] px-2.5 py-1.5 text-[11px] text-[#2f4a3e] no-underline hover:bg-[#f0f4ec]';
+  const btn = 'inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-[#176b53] bg-[#176b53] px-3 py-2 text-[12px] font-semibold text-white no-underline hover:bg-[#10533f]';
   return <div className="mt-3">
     <div className="flex flex-wrap gap-1.5">
       <a className={btn} href={mapsOpenUrl(geo, lang)} target="_blank" rel="noreferrer"><ExternalLink size={13} />{s.open}</a>
