@@ -74,7 +74,7 @@ export default function FestivalExplorer(){
  </aside>
  <section className="map-area"><ThreeVenue/>
  <div className="map-top"><span className="map-status max-md:!hidden"><span className="dot"/>{ui.sub}</span><button className="mobile-search" type="button" onClick={openSearch}><Search size={18}/><span>{query||ui.search}</span></button><button className="gps" aria-label={ui.location} onClick={()=>{setToolsOpen(false);if(S.locState==='off'||S.locState==='denied'||S.locState==='unsupported'){S.locate();S.setGps(true)}else S.setGps(!gpsMessage)}} title={ui.location}><LocateFixed size={18}/></button></div>
- {!routeOpen&&<div ref={toolsRef} className="map-tools-wrap"><button type="button" className={`map-tools-toggle ${toolsOpen?'on':''}`} aria-label={mapUi.settings} aria-expanded={toolsOpen} title={mapUi.settings} onClick={()=>{setLegend(false);S.setGps(false);setToolsOpen(!toolsOpen)}}><Layers size={20}/><span>{mapUi.settings}</span></button>
+ {!routeOpen&&<div ref={toolsRef} className={`map-tools-wrap ${mobileList?'max-md:!hidden':''}`}><button type="button" className={`map-tools-toggle ${toolsOpen?'on':''}`} aria-label={mapUi.settings} aria-expanded={toolsOpen} title={mapUi.settings} onClick={()=>{setLegend(false);S.setGps(false);setToolsOpen(!toolsOpen)}}><Layers size={20}/><span>{mapUi.settings}</span></button>
  {toolsOpen&&<div className="map-tools-panel" aria-label={mapUi.settings}>
   <strong>{mapUi.settings}</strong>
   <span className="tool-section-title">{mapUi.light}</span>
