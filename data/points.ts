@@ -70,7 +70,16 @@ const mkActs = (rows: Row[], key: 'festival' | 'culture'): Point[] => rows.map((
   height: .35, focusDistance: 2.6, tags: ['festival', key], title: t(r.th, r.en, r.zh), description: planNote, sources: planSrc,
   geo: { lat: r.geos[0][0], lng: r.geos[0][1] }, geoExtra: r.geos.slice(1).map(([lat, lng]) => ({ lat, lng })), scheduleText: r.when ? t(...r.when) : null,
 }; });
-export const activityPoints: Point[] = [...mkActs(festivalRows, 'festival'), ...mkActs(cultureRows, 'culture')];
+/** Raknakhwan stage (Cooperative Goods Market), added from an organizer Facebook post (user-supplied link). The post gives only "beside the Ramkhamhaeng monument plaza": no official GPS, so position is estimated next to G and the pin is flagged unverified. */
+const raknakhwan: Point = {
+  ...base, id: 'stage-raknakhwan', code: '★', category: 'activity', series: 'culture', ...(([x, y]) => ({ x, y }))(geoToGrid(17.01995, 99.70491)), verified: false, status: 'placeholder', model: 'stage',
+  height: .35, focusDistance: 2.6, tags: ['festival', 'culture', 'stage'],
+  title: t('เวทีแรกนาขวัญ ตลาดสินค้าสหกรณ์', 'Raknakhwan Stage, Cooperative Goods Market', '农耕祈福舞台 · 合作社商品市场'),
+  description: t('ข้างลานพระบรมราชานุสาวรีย์พ่อขุนรามคำแหงมหาราช (ตำแหน่งบนแผนที่เป็นการประมาณ) · 24 พ.ย. 20:30–21:30 น. โชว์ อ้น ภานุวัฒน์ (ชิงช้าสวรรค์) ตามโปสเตอร์', 'Beside the King Ramkhamhaeng Monument plaza (map position is an estimate) · 24 Nov 20:30–21:30 show by Aun Phanuwat per the poster', '位于兰甘亨大帝纪念碑广场旁（地图位置为估算）· 11月24日20:30–21:30 阿恩·帕努瓦演出（据海报）'),
+  scheduleText: t('24 พ.ย. 20:30–21:30 น. โชว์ อ้น ภานุวัฒน์', '24 Nov 20:30–21:30 · show by Aun Phanuwat', '11月24日 20:30–21:30 · 阿恩·帕努瓦演出'),
+  sources: [{ label: 'Organizer Facebook post (supplied by user)', url: 'https://www.facebook.com/photo?fbid=1146766684830841&set=a.117889281051925' }],
+};
+export const activityPoints: Point[] = [...mkActs(festivalRows, 'festival'), ...mkActs(cultureRows, 'culture'), raknakhwan];
 const fac = (id: string, code: string, model: ModelType, ll: [number, number] | null, fallback: [number, number], th: string, en: string, zh: string, tags: string[]): Point => {
   const [x, y] = ll ? geoToGrid(...ll) : fallback;
   return { ...base, id: `facility-${id}`, code, category: 'facility', x, y, verified: !!ll, status: ll ? 'name-verified' : 'generic', model, height: .25, focusDistance: 2.6, tags, title: t(th, en, zh),
