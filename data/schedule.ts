@@ -103,7 +103,7 @@ export const SCHEDULE: Record<DayKey, ScheduleItem[]> = {
   '2026-11-16': sortItems(regular()),
   '2026-11-17': sortItems(regular()),
   '2026-11-18': sortItems(regular({ extra: [contest('19:30', 'ประกวดนางนพมาศ รอบแรก', 'Nang Nopphamat contest: first round', '娘诺帕玛丝评选：首轮')] })),
-  '2026-11-19': sortItems(regular({ art: true, extra: [{ time: '20:30', title: t('โชว์ อ๊อฟ สุรพล (ยังไม่ระบุเวลา — โปรดตรวจสอบ)', 'Show by Off Surapol (showtime not announced — please check)', '奥夫·苏拉蓬演出（时间未公布，请核实）'), place: L.raknakhwan, extra: true, dur: 60 }] })),
+  '2026-11-19': sortItems(regular({ art: true })),
   '2026-11-20': sortItems(regular({ art: true, extra: [contest('19:30', 'ประกวดนางนพมาศ รอบคัดเลือก', 'Nang Nopphamat contest: selection round', '娘诺帕玛丝评选：选拔赛')] })),
   '2026-11-21': sortItems(regular({ art: true })),
   '2026-11-22': sortItems([
@@ -136,3 +136,8 @@ export const SCHEDULE: Record<DayKey, ScheduleItem[]> = {
 };
 /** Daily constants from the PDF. */
 export const DAY_BADGE: Partial<Record<DayKey, Localized>> = { '2026-11-15': t('วันเปิดงาน', 'Opening day', '开幕日'), '2026-11-24': t('วันลอยกระทง', 'Loy Krathong day', '水灯节') };
+
+/** Announced for the day but without a showtime; shown above the timed list and never counted as live/next. */
+export const UNTIMED: Partial<Record<DayKey, ScheduleItem[]>> = {
+  '2026-11-19': [{ time: '', title: t('โชว์ อ๊อฟ สุรพล', 'Show by Off Surapol', '奥夫·苏拉蓬演出'), place: L.raknakhwan, extra: true }],
+};

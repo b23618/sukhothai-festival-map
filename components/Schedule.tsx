@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CalendarClock, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, MapPin, Star, X, Flag, Flame, Trophy, Drama, Store, LocateFixed } from 'lucide-react';
 import type { Language } from '@/data/points';
-import { DAYS, DAY_BADGE, SCHEDULE, SCHEDULE_SOURCE, type DayKey, type ScheduleItem } from '@/data/schedule';
+import { DAYS, DAY_BADGE, SCHEDULE, SCHEDULE_SOURCE, UNTIMED, type DayKey, type ScheduleItem } from '@/data/schedule';
 /** Daily programme: day strip, "now / next" for today, earlier vs upcoming slots, plus previous-day / next-day previews. Data: data/schedule.ts (official PDF). */
 const T = {
   th: { title: 'กำหนดการรายวัน', sub: 'งานประเพณีลอยกระทง เผาเทียน เล่นไฟ 15–24 พ.ย. 2569', close: 'ปิด', today: 'วันนี้', yesterday: 'เมื่อวาน', tomorrow: 'พรุ่งนี้', before: 'ผ่านไปแล้ว', now: 'เริ่มล่าสุด', next: 'ถัดไป', later: 'ต่อไป', upcoming: 'กำหนดการวันนี้', all: 'ทั้งหมด', key: 'ไฮไลต์', items: 'รายการ', prevDay: 'วันก่อนหน้า', nextDay: 'วันถัดไป', go: 'ดูวันนี้', by: 'จัดโดย', showPast: (n: number) => `แสดงที่ผ่านไปแล้ว ${n} รายการ`, hidePast: 'ซ่อนที่ผ่านไปแล้ว', in: (h: number, m: number) => `อีก ${h ? `${h} ชม. ` : ''}${m} นาที`, startsIn: (d: number) => d === 0 ? 'งานเริ่มวันนี้' : `งานเริ่มในอีก ${d} วัน`, over: 'งานสิ้นสุดแล้ว', none: 'ไม่มีรายการ', extra: 'ไม่อยู่ในกำหนดการทางการ', note: 'ถอดจากกำหนดการทางการ (ฉบับ 1 ต.ค. 2569) เวลาเป็นเวลาเริ่มกิจกรรม อาจมีการเปลี่ยนแปลง', src: 'ดูกำหนดการทางการ', empty: 'วันนี้ไม่มีกิจกรรมที่เหลือ', nowLbl: 'ตอนนี้', live: 'กำลังแสดง', liveNone: 'ตอนนี้ยังไม่มีการแสดง', open: (n: number) => `ตลาด/บูธที่เปิดอยู่ ${n} รายการ`, left: (m: number) => `เหลือราว ${m} นาที`, est: 'เวลาจบเป็นค่าประมาณ (PDF ระบุเฉพาะเวลาเริ่ม)', updated: 'อัปเดตสด' },
@@ -37,6 +37,7 @@ const KINDS = {
 } as const;
 type Kind = keyof typeof KINDS;
 const kindOf = (it: ScheduleItem): Kind => { const t = it.title.th; return /ขบวน/.test(t) ? 'procession' : /ประกวด|ผู้เข้าประกวด/.test(t) ? 'contest' : /พิธี|ตะคัน|จุดตะคัน/.test(t) ? 'ceremony' : it.stay || /ตลาด|จำหน่าย|นิทรรศการ|ท่องเที่ยว|รับรุ่งอรุณ|ลานเทศน์/.test(t) ? 'market' : 'show'; };
+const TBD = { th: 'ยังไม่ระบุเวลา', en: 'Time not announced', zh: '时间未公布' };
 type Tone = 'past' | 'now' | 'next' | 'plain';
 function Row({ it, lang, tone, left, prog }: { it: ScheduleItem; lang: Language; tone: Tone; left?: number; prog?: number }) {
   const s = T[lang], k = KINDS[kindOf(it)], [open, setOpen] = useState(false), live = tone === 'now';
@@ -79,11 +80,11 @@ export function ScheduleCard({ lang, onOpen }: { lang: Language; onOpen: () => v
     const items = SCHEDULE[now.date as DayKey], live = items.find(i => !i.stay && mins(i.time) <= now.min && now.min < endOf(i)), nx = items.find(i => mins(i.time) > now.min);
     return { head: s.today, line: live ?? nx ?? null, live: !!live };
   }, [now, s]);
-  return <button type="button" onClick={onOpen} className="flex w-full items-center gap-2.5 rounded-xl border border-[#cfe3d8] bg-gradient-to-br from-[#eef6f1] to-[#f9fcfa] px-2.5 py-2 text-left">
-    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#176b53] text-white"><CalendarClock size={18} /></span>
-    <span className="min-w-0 flex-1"><span className="block text-[10px] font-bold uppercase tracking-wider text-[#176b53]">{s.title}{info?.line ? ` · ${info.live ? s.live : s.next}` : ''}</span>
-      <span className={`block truncate font-bold text-[#172a24] ${info?.line ? 'text-[13px]' : 'text-[16px]'}`}>{info?.line ? `${info.line.time} ${info.line.title[lang]}` : info?.head ?? s.sub}</span></span>
-    <ChevronRight size={18} className="shrink-0 text-[#176b53]" />
+  return <button type="button" onClick={onOpen} className={`flex w-full items-center gap-2.5 rounded-xl border text-left ${info?.line ? 'border-[#cfe3d8] bg-gradient-to-br from-[#eef6f1] to-[#f9fcfa] px-2.5 py-2' : 'border-[#0f4d3b] bg-gradient-to-br from-[#176b53] to-[#0f4d3b] px-3 py-3 shadow-md'}`}>
+    <span className={`grid shrink-0 place-items-center rounded-lg ${info?.line ? 'h-9 w-9 bg-[#176b53] text-white' : 'h-11 w-11 bg-white/20 text-white'}`}><CalendarClock size={info?.line ? 18 : 22} /></span>
+    <span className="min-w-0 flex-1"><span className={`block text-[10px] font-bold uppercase tracking-wider ${info?.line ? 'text-[#176b53]' : 'text-[#bfe8d6]'}`}>{s.title}{info?.line ? ` · ${info.live ? s.live : s.next}` : ''}</span>
+      <span className={`block truncate font-bold ${info?.line ? 'text-[13px] text-[#172a24]' : 'text-[21px] leading-7 text-white'}`}>{info?.line ? `${info.line.time} ${info.line.title[lang]}` : info?.head ?? s.sub}</span></span>
+    <ChevronRight size={18} className={`shrink-0 ${info?.line ? 'text-[#176b53]' : 'text-white'}`} />
   </button>;
 }
 export default function Schedule({ lang, onClose }: { lang: Language; onClose: () => void }) {
@@ -153,6 +154,7 @@ export default function Schedule({ lang, onClose }: { lang: Language; onClose: (
         {now && !todayIsLive && <div className="mb-2 rounded-xl bg-[#fff6e0] px-3 py-2.5 text-[15px] font-bold text-[#6b5314]">{now.date < DAYS[0] ? s.startsIn(daysBetween(now.date, DAYS[0])) : s.over}</div>}
         <div className="sticky top-0 z-10 -mx-4 mb-1 flex gap-1.5 overflow-x-auto border-b border-[#eeeee8] bg-white px-4 py-2 shadow-[0_6px_8px_-6px_rgba(0,0,0,.12)] [scrollbar-width:none]" role="group">{([['all', s.all, null], ...(hasKey ? [['key', s.key, null]] : []), ...kindsHere.map(k => [k, KINDS[k][lang], KINDS[k].Icon])] as [string, string, React.ElementType | null][]).map(([v, l, Ic]) => <button key={v} type="button" aria-pressed={f === v} onClick={() => setFilter(v as typeof filter)} className={`flex min-h-9 shrink-0 items-center gap-1 rounded-full border px-3 text-[12px] font-semibold ${f === v ? 'border-[#176b53] bg-[#176b53] text-white' : 'border-[#e0e3dc] bg-white text-[#3c4a43]'}`}>{v === 'key' && <Star size={12} fill="currentColor" />}{Ic && <Ic size={13} />}{l}</button>)}</div>
         </>
+        {f === 'all' && !!UNTIMED[day]?.length && <div className="mb-1 rounded-xl border border-dashed border-[#d9c9a0] bg-[#fffaf0] px-1 pb-1 pt-2"><div className="px-2 text-[11px] font-bold text-[#8a6a1f]">{TBD[lang]}</div><ul className="m-0 list-none space-y-0.5 p-0">{UNTIMED[day]!.map((it, i) => <Row key={i} it={it} lang={lang} tone="plain" />)}</ul></div>}
         {body}
         <div className="mt-5 grid grid-cols-2 gap-2 max-md:grid-cols-1">
           {idx > 0 && <Preview k={DAYS[idx - 1]} label={s.prevDay} lang={lang} side="prev" onGo={() => go(idx - 1)} />}

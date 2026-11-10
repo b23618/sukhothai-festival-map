@@ -75,9 +75,9 @@ const raknakhwan: Point = {
   ...base, id: 'stage-raknakhwan', code: '★', category: 'activity', series: 'culture', ...(([x, y]) => ({ x, y }))(geoToGrid(17.01995, 99.70491)), verified: false, status: 'placeholder', model: 'stage',
   height: .35, focusDistance: 2.6, tags: ['festival', 'culture', 'stage'],
   title: t('เวทีแรกนาขวัญ ตลาดสินค้าสหกรณ์', 'Raknakhwan Stage, Cooperative Goods Market', '农耕祈福舞台 · 合作社商品市场'),
-  description: t('ข้างลานพระบรมราชานุสาวรีย์พ่อขุนรามคำแหงมหาราช (ตำแหน่งบนแผนที่เป็นการประมาณ) · 24 พ.ย. 20:30–21:30 น. โชว์ อ้น ภานุวัฒน์ (ชิงช้าสวรรค์) ตามโปสเตอร์', 'Beside the King Ramkhamhaeng Monument plaza (map position is an estimate) · 24 Nov 20:30–21:30 show by Aun Phanuwat per the poster', '位于兰甘亨大帝纪念碑广场旁（地图位置为估算）· 11月24日20:30–21:30 阿恩·帕努瓦演出（据海报）'),
-  scheduleText: t('24 พ.ย. 20:30–21:30 น. โชว์ อ้น ภานุวัฒน์', '24 Nov 20:30–21:30 · show by Aun Phanuwat', '11月24日 20:30–21:30 · 阿恩·帕努瓦演出'),
-  sources: [{ label: 'Organizer Facebook post (supplied by user)', url: 'https://www.facebook.com/photo?fbid=1146766684830841&set=a.117889281051925' }],
+  description: t('ข้างลานพระบรมราชานุสาวรีย์พ่อขุนรามคำแหงมหาราช (ตำแหน่งบนแผนที่เป็นการประมาณ) · 19 พ.ย. โชว์ อ๊อฟ สุรพล (ยังไม่ระบุเวลา) · 24 พ.ย. 20:30–21:30 น. โชว์ อ้น ภานุวัฒน์ (ชิงช้าสวรรค์) ตามโปสเตอร์', 'Beside the King Ramkhamhaeng Monument plaza (map position is an estimate) · 19 Nov show by Off Surapol (time not announced) · 24 Nov 20:30–21:30 show by Aun Phanuwat per the poster', '位于兰甘亨大帝纪念碑广场旁（地图位置为估算）· 11月19日 奥夫·苏拉蓬演出（时间未公布）· 11月24日20:30–21:30 阿恩·帕努瓦演出（据海报）'),
+  scheduleText: t('19 พ.ย. โชว์ อ๊อฟ สุรพล (ยังไม่ระบุเวลา) · 24 พ.ย. 20:30–21:30 น. โชว์ อ้น ภานุวัฒน์', '19 Nov show by Off Surapol (time not announced) · 24 Nov 20:30–21:30 show by Aun Phanuwat', '11月19日 奥夫·苏拉蓬演出（时间未公布）· 11月24日 20:30–21:30 阿恩·帕努瓦演出'),
+  sources: [{ label: 'Organizer Facebook post (supplied by user)', url: 'https://www.facebook.com/photo?fbid=1146766684830841&set=a.117889281051925' }, { label: 'สุโขทัย "พาเที่ยว" Facebook post (19 Nov show)', url: 'https://www.facebook.com/share/p/1KQLu81Fqe/' }],
 };
 export const activityPoints: Point[] = [...mkActs(festivalRows, 'festival'), ...mkActs(cultureRows, 'culture'), raknakhwan];
 const fac = (id: string, code: string, model: ModelType, ll: [number, number] | null, fallback: [number, number], th: string, en: string, zh: string, tags: string[]): Point => {
