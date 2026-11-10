@@ -137,3 +137,5 @@ export const allInitialPoints: Point[] = [...initialPoints, ...activityPoints, .
 export type CategoryFilter = 'all' | Category | 'firstaid' | 'parking' | 'shuttle' | 'wc';
 const FILTER_MODEL: Record<string, string> = { firstaid: 'hospital', parking: 'parking', shuttle: 'bus-stop', wc: 'wc' };
 export const inCategory = (p: Point, c: CategoryFilter) => c === 'all' || (FILTER_MODEL[c] ? p.model === FILTER_MODEL[c] : p.category === c);
+/** Multi-select filter: an empty list means "all". */
+export const inCategories = (p: Point, cs: CategoryFilter[]) => !cs.length || cs.some(c => inCategory(p, c));
