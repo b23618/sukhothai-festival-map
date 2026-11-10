@@ -1,7 +1,7 @@
 'use client';
 import VisitorCount from './VisitorCount';
 import Highlights from './Highlights';
-import Schedule,{ScheduleCard} from './Schedule';
+import Schedule,{ScheduleCard,useFestivalStarted} from './Schedule';
 import dynamic from 'next/dynamic';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {ListChecks, CalendarClock, Layers, ChevronDown, ChevronUp, Search, MapPin, Landmark, CalendarDays, Wrench, Menu, X, Plus, Minus, Navigation, Check, CircleDot, Flag as FlagIcon, BriefcaseMedical, CircleParking, Bus, Toilet, Info, LocateFixed, Sun, Sunset, Moon, Box, ArrowDownToLine,} from 'lucide-react';
@@ -49,7 +49,7 @@ function LangMenu({lang,onPick}:{lang:Language;onPick:(l:Language)=>void}){
  </div>;
 }
 export default function FestivalExplorer(){
- const S=useMapStore();const [about,setAbout]=useState(false);const [sched,setSched]=useState(false);const searchRef=useRef<HTMLInputElement>(null);const toolsRef=useRef<HTMLDivElement>(null);const {lang,points,query,categories,selectedId,time,mobileList,gpsMessage}=S;
+ const S=useMapStore();const [about,setAbout]=useState(false);const [sched,setSched]=useState(false);const started=useFestivalStarted();const searchRef=useRef<HTMLInputElement>(null);const toolsRef=useRef<HTMLDivElement>(null);const {lang,points,query,categories,selectedId,time,mobileList,gpsMessage}=S;
  const ui=translations[lang], mapUi=mapToolsText[lang];const [more,setMore]=useState(false);const [legend,setLegend]=useState(false);const [toolsOpen,setToolsOpen]=useState(false);useEffect(()=>{setMore(false)},[selectedId]);const routeOpen=!!(S.routeFrom||S.routeTo);const sheetBusy=routeOpen||gpsMessage||legend;
  useEffect(()=>{if(routeOpen){setLegend(false);setToolsOpen(false)}},[routeOpen]);
  useEffect(()=>{if(!toolsOpen)return;const outside=(e:MouseEvent)=>{if(!toolsRef.current?.contains(e.target as Node))setToolsOpen(false)},escape=(e:KeyboardEvent)=>{if(e.key==='Escape')setToolsOpen(false)};document.addEventListener('mousedown',outside);document.addEventListener('keydown',escape);return()=>{document.removeEventListener('mousedown',outside);document.removeEventListener('keydown',escape)}},[toolsOpen]);
@@ -69,7 +69,7 @@ export default function FestivalExplorer(){
  {mobileList&&<button className="mobile-drawer-backdrop" aria-label={ui.close} onClick={()=>S.setMobileList(false)}/>}
  <aside className={`sidebar ${mobileList?'show':''}`}><div className="sidebar-head"><h2 className="sr-only">{ui.explore}</h2><div className="search-box"><Search size={19}/><input ref={searchRef} aria-label={ui.search} value={query} onChange={e=>S.setQuery(e.target.value)} placeholder={ui.search}/>{query&&<button onClick={()=>S.setQuery('')} aria-label={ui.close}><X size={16}/></button>}</div></div>
  <div className="filters max-md:!hidden">{categoryButtons}</div><FilterDropdown/><div className="list-caption">{filtered.length} {ui.count}</div>
- <div className="place-list">{!categories.length&&!query.trim()&&<div className="bg-[#fffaf0] px-3 pt-2.5"><ScheduleCard lang={lang} onOpen={()=>setSched(true)}/></div>}{!categories.length&&!query.trim()&&<Highlights lang={lang} points={points} onPick={id=>{S.select(id);S.setMobileList(false)}}/>}{filtered.length?filtered.map(p=><button key={p.id} className={`place-item ${selectedId===p.id?'active':''}`} onClick={()=>{S.select(p.id);S.setMobileList(false)}}><span className={`code ${p.category} m-${p.model} ${p.series??''}`}>{p.code}</span><span className="place-copy"><strong>{p.title[lang]}</strong><small>{catLabel(ui,p.category,lang,p.series)} · {p.title.en}</small></span><span className="arrow">›</span></button>):<div className="no-results">{ui.empty}</div>}</div>
+ <div className="place-list">{!categories.length&&!query.trim()&&<div className="bg-[#fffaf0] px-3 pt-2.5"><ScheduleCard lang={lang} onOpen={()=>setSched(true)}/></div>}{!categories.length&&!query.trim()&&<Highlights showFeatured={started} lang={lang} points={points} onPick={id=>{S.select(id);S.setMobileList(false)}}/>}{filtered.length?filtered.map(p=><button key={p.id} className={`place-item ${selectedId===p.id?'active':''}`} onClick={()=>{S.select(p.id);S.setMobileList(false)}}><span className={`code ${p.category} m-${p.model} ${p.series??''}`}>{p.code}</span><span className="place-copy"><strong>{p.title[lang]}</strong><small>{catLabel(ui,p.category,lang,p.series)} · {p.title.en}</small></span><span className="arrow">›</span></button>):<div className="no-results">{ui.empty}</div>}</div>
  <div className="sidebar-footer"><p className="m-0 mb-1 text-[10px] leading-4 text-[#8a7a4a] md:hidden">{ui.disclaimer}</p><p className="m-0 text-[11px] leading-5 text-[#77857d]">{{th:'จัดทำโดย',en:'Created by',zh:'制作'}[lang]} <a className="font-semibold text-[#176c54] underline" href="https://www.facebook.com/nayboom2536?locale=th_TH" target="_blank" rel="noreferrer">{{th:'นายบูม เม่นเผือก',en:'Nai Boom Menpheuak',zh:'Boom Menpheuak'}[lang]}</a><VisitorCount lang={lang} /></p></div>
  </aside>
  <section className="map-area"><ThreeVenue/>

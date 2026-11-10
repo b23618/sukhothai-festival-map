@@ -18,6 +18,8 @@ function bkk(d = new Date()) {
   return { date: `${p.year}-${p.month}-${p.day}`, min: (+p.hour % 24) * 60 + +p.minute };
 }
 export function useBkkNow() { const [n, setN] = useState<{ date: string; min: number } | null>(null); useEffect(() => { setN(bkk()); const id = setInterval(() => setN(bkk()), 10000); return () => clearInterval(id); }, []); return n; }
+/** True from the first festival day on (Bangkok clock, honours ?now=); false while the time is still unknown. */
+export function useFestivalStarted() { const n = useBkkNow(); return !!n && n.date >= DAYS[0]; }
 const mins = (t: string) => +t.slice(0, 2) * 60 + +t.slice(3);
 const endOf = (it: ScheduleItem) => mins(it.time) + (it.dur ?? (it.stay ? Math.max(30, 22 * 60 - mins(it.time)) : 60));
 const dayNum = (k: string) => +k.slice(8);
@@ -80,7 +82,7 @@ export function ScheduleCard({ lang, onOpen }: { lang: Language; onOpen: () => v
     const items = SCHEDULE[now.date as DayKey], live = items.find(i => !i.stay && mins(i.time) <= now.min && now.min < endOf(i)), nx = items.find(i => mins(i.time) > now.min);
     return { head: s.today, line: live ?? nx ?? null, live: !!live };
   }, [now, s]);
-  return <button type="button" onClick={onOpen} className={`flex w-full items-center gap-2.5 rounded-xl border text-left ${info?.line ? 'border-[#cfe3d8] bg-gradient-to-br from-[#eef6f1] to-[#f9fcfa] px-2.5 py-2' : 'border-[#0f4d3b] bg-gradient-to-br from-[#176b53] to-[#0f4d3b] px-3 py-3 shadow-md'}`}>
+  return <button type="button" onClick={onOpen} className={`flex w-full items-center gap-2.5 text-left rounded-xl border ${info?.line ? 'border-[#cfe3d8] bg-gradient-to-br from-[#eef6f1] to-[#f9fcfa] px-2.5 py-2' : 'border-[#0f4d3b] bg-gradient-to-br from-[#176b53] to-[#0f4d3b] px-3 py-3 shadow-md'}`}>
     <span className={`grid shrink-0 place-items-center rounded-lg ${info?.line ? 'h-9 w-9 bg-[#176b53] text-white' : 'h-11 w-11 bg-white/20 text-white'}`}><CalendarClock size={info?.line ? 18 : 22} /></span>
     <span className="min-w-0 flex-1"><span className={`block text-[10px] font-bold uppercase tracking-wider ${info?.line ? 'text-[#176b53]' : 'text-[#bfe8d6]'}`}>{s.title}{info?.line ? ` · ${info.live ? s.live : s.next}` : ''}</span>
       <span className={`block truncate font-bold ${info?.line ? 'text-[13px] text-[#172a24]' : 'text-[21px] leading-7 text-white'}`}>{info?.line ? `${info.line.time} ${info.line.title[lang]}` : info?.head ?? s.sub}</span></span>
