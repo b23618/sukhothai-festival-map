@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarClock, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, MapPin, Star, X, Radio } from 'lucide-react';
+import { CalendarClock, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, MapPin, Star, X, Flag, Flame, Trophy, Drama, Store, LocateFixed } from 'lucide-react';
 import type { Language } from '@/data/points';
 import { DAYS, DAY_BADGE, SCHEDULE, SCHEDULE_SOURCE, type DayKey, type ScheduleItem } from '@/data/schedule';
 /** Daily programme: day strip, "now / next" for today, earlier vs upcoming slots, plus previous-day / next-day previews. Data: data/schedule.ts (official PDF). */
@@ -28,20 +28,38 @@ const dateLabel = (k: string, lang: Language) => lang === 'zh' ? `11月${dayNum(
 export const initialDay = (date: string | null): DayKey => !date || date < DAYS[0] ? DAYS[0] : date > DAYS[9] ? DAYS[9] : (date as DayKey);
 type Slot = { time: string; items: ScheduleItem[] };
 const slots = (items: ScheduleItem[]): Slot[] => { const out: Slot[] = []; for (const it of items) { const s = out[out.length - 1]; if (s && s.time === it.time) s.items.push(it); else out.push({ time: it.time, items: [it] }); } return out; };
-function Row({ it, lang, tone, left }: { it: ScheduleItem; lang: Language; tone: 'past' | 'now' | 'next' | 'plain'; left?: number }) {
-  const s = T[lang];
-  return <li className={`rounded-xl border px-3 py-2 ${tone === 'now' ? 'border-[#176b53] bg-[#eef6f1] shadow-[0_0_0_2px_rgba(23,107,83,.25)]' : tone === 'next' ? 'border-[#e6b45a] bg-[#fff7e4]' : it.key ? 'border-[#ecd9a8] bg-[#fffaf0]' : 'border-[#eeeee8] bg-white'} ${tone === 'past' ? 'opacity-60' : ''}`}>
-    {tone === 'now' && <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#176b53]"><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#e8175d] opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-[#e8175d]" /></span>{s.live}{left !== undefined && <span className="rounded-full bg-white px-1.5 py-0.5 normal-case tracking-normal text-[#546258]">{s.left(left)}</span>}</div>}
-    <div className="flex items-start gap-1.5 text-[13px] font-semibold leading-5 text-[#1b2b25]">{it.key && <Star size={13} className="mt-1 shrink-0 text-[#d08a1c]" fill="currentColor" />}<span>{it.title[lang]}</span></div>
-    <div className="mt-0.5 flex items-start gap-1 text-[12px] leading-4 text-[#546258]"><MapPin size={12} className="mt-0.5 shrink-0" /><span>{it.place[lang]}</span></div>
-    {it.by && <div className="mt-0.5 text-[11px] leading-4 text-[#8a7a4a]">{s.by} {it.by}</div>}
-    {it.extra && <div className="mt-1 inline-block rounded-full bg-[#f3e8ff] px-2 py-0.5 text-[10px] font-semibold text-[#6b2e98]">{s.extra}</div>}
+const KINDS = {
+  procession: { Icon: Flag, c: '#b4572a', th: 'ขบวนแห่', en: 'Processions', zh: '游行' },
+  ceremony: { Icon: Flame, c: '#d9531e', th: 'พิธี', en: 'Ceremonies', zh: '仪式' },
+  contest: { Icon: Trophy, c: '#b98236', th: 'ประกวด', en: 'Contests', zh: '评选' },
+  show: { Icon: Drama, c: '#7b39a8', th: 'การแสดง', en: 'Shows', zh: '演出' },
+  market: { Icon: Store, c: '#2f7d5b', th: 'ตลาด/บูธ', en: 'Markets', zh: '集市/展位' },
+} as const;
+type Kind = keyof typeof KINDS;
+const kindOf = (it: ScheduleItem): Kind => { const t = it.title.th; return /ขบวน/.test(t) ? 'procession' : /ประกวด|ผู้เข้าประกวด/.test(t) ? 'contest' : /พิธี|ตะคัน|จุดตะคัน/.test(t) ? 'ceremony' : it.stay || /ตลาด|จำหน่าย|นิทรรศการ|ท่องเที่ยว|รับรุ่งอรุณ|ลานเทศน์/.test(t) ? 'market' : 'show'; };
+type Tone = 'past' | 'now' | 'next' | 'plain';
+function Row({ it, lang, tone, left, prog }: { it: ScheduleItem; lang: Language; tone: Tone; left?: number; prog?: number }) {
+  const s = T[lang], k = KINDS[kindOf(it)], [open, setOpen] = useState(false), live = tone === 'now';
+  return <li className={`relative rounded-xl ${live ? 'bg-[#eef6f1] ring-2 ring-[#176b53]/30' : tone === 'next' ? 'bg-[#fff7e4]' : ''} ${tone === 'past' ? 'opacity-60' : ''}`}>
+    <button type="button" aria-expanded={open} onClick={() => setOpen(v => !v)} className="flex w-full items-start gap-2.5 rounded-xl border-0 bg-transparent px-2 py-2 text-left">
+      <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg text-white" style={{ background: k.c }}><k.Icon size={15} /></span>
+      <span className="min-w-0 flex-1">
+        {live && <span className="mb-0.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#176b53]"><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#e8175d] opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-[#e8175d]" /></span>{s.live}{left !== undefined && <span className="rounded-full bg-white px-1.5 py-0.5 normal-case tracking-normal text-[#546258]">{s.left(left)}</span>}</span>}
+        <span className={`text-[13.5px] font-semibold leading-5 text-[#172a24] ${open ? "block" : "line-clamp-2"}`}>{it.key && <Star size={12} className="mr-1 inline -translate-y-px text-[#d08a1c]" fill="currentColor" />}{it.title[lang]}</span>
+        <span className="mt-0.5 flex items-start gap-1 text-[12px] leading-4 text-[#6a766f]"><MapPin size={12} className="mt-px shrink-0" /><span className={open ? '' : 'line-clamp-1'}>{it.place[lang]}</span></span>
+        {open && it.by && <span className="mt-1 block text-[11px] leading-4 text-[#8a7a4a]">{s.by} {it.by}</span>}
+        {it.extra && <span className="mt-1 inline-block rounded-full bg-[#f3e8ff] px-2 py-0.5 text-[10px] font-semibold text-[#6b2e98]">{s.extra}</span>}
+        {live && prog !== undefined && <span className="mt-1.5 block h-1 overflow-hidden rounded-full bg-[#cfe3d8]"><span className="block h-full rounded-full bg-[#176b53]" style={{ width: `${Math.round(prog * 100)}%` }} /></span>}
+      </span>
+    </button>
   </li>;
 }
-function SlotView({ slot, lang, tone }: { slot: Slot; lang: Language; tone: 'past' | 'now' | 'next' | 'plain' }) {
-  return <div className="grid grid-cols-[3.4rem_1fr] gap-2 max-md:grid-cols-[3rem_1fr]">
-    <div className={`pt-2 text-[15px] font-bold tabular-nums ${tone === 'now' ? 'text-[#176b53]' : tone === 'next' ? 'text-[#b36a00]' : 'text-[#172a24]'}`}>{slot.time}</div>
-    <ul className="m-0 list-none space-y-1.5 p-0">{slot.items.map((it, i) => <Row key={i} it={it} lang={lang} tone={tone} />)}</ul>
+function SlotView({ slot, lang, tone, last, now }: { slot: Slot; lang: Language; tone: Tone; last?: boolean; now?: number | null }) {
+  const dot = tone === 'now' ? 'bg-[#176b53] ring-4 ring-[#176b53]/20' : tone === 'next' ? 'bg-[#e6a21f] ring-4 ring-[#e6a21f]/25' : tone === 'past' ? 'bg-[#c9cec6]' : 'bg-[#8fb3a3]';
+  return <div className="grid grid-cols-[2.9rem_.9rem_1fr] gap-x-1">
+    <div className={`pt-2.5 text-right text-[14px] font-bold tabular-nums leading-5 ${tone === 'now' ? 'text-[#176b53]' : tone === 'next' ? 'text-[#b36a00]' : tone === 'past' ? 'text-[#8a9189]' : 'text-[#172a24]'}`}>{slot.time}</div>
+    <div className="relative"><span className={`absolute left-1/2 top-[18px] h-px w-px -translate-x-1/2 ${last ? 'hidden' : ''}`} /><span className={`absolute bottom-0 left-1/2 top-[18px] w-px -translate-x-1/2 bg-[#e1e5de] ${last ? 'hidden' : ''}`} /><span className={`absolute left-1/2 top-[14px] h-2.5 w-2.5 -translate-x-1/2 rounded-full ${dot}`} /></div>
+    <ul className="m-0 list-none space-y-0.5 p-0 pb-2">{slot.items.map((it, i) => <Row key={i} it={it} lang={lang} tone={tone} left={tone === 'now' && now != null ? endOf(it) - now : undefined} prog={tone === 'now' && now != null ? Math.min(1, Math.max(0, (now - mins(it.time)) / (endOf(it) - mins(it.time)))) : undefined} />)}</ul>
   </div>;
 }
 function Preview({ k, label, lang, onGo, side }: { k: DayKey; label: string; lang: Language; onGo: () => void; side: 'prev' | 'next' }) {
@@ -64,21 +82,25 @@ export function ScheduleCard({ lang, onOpen }: { lang: Language; onOpen: () => v
   return <button type="button" onClick={onOpen} className="flex w-full items-center gap-2.5 rounded-xl border border-[#cfe3d8] bg-gradient-to-br from-[#eef6f1] to-[#f9fcfa] px-2.5 py-2 text-left">
     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#176b53] text-white"><CalendarClock size={18} /></span>
     <span className="min-w-0 flex-1"><span className="block text-[10px] font-bold uppercase tracking-wider text-[#176b53]">{s.title}{info?.line ? ` · ${info.live ? s.live : s.next}` : ''}</span>
-      <span className="block truncate text-[13px] font-bold text-[#172a24]">{info?.line ? `${info.line.time} ${info.line.title[lang]}` : info?.head ?? s.sub}</span></span>
+      <span className={`block truncate font-bold text-[#172a24] ${info?.line ? 'text-[13px]' : 'text-[16px]'}`}>{info?.line ? `${info.line.time} ${info.line.title[lang]}` : info?.head ?? s.sub}</span></span>
     <ChevronRight size={18} className="shrink-0 text-[#176b53]" />
   </button>;
 }
 export default function Schedule({ lang, onClose }: { lang: Language; onClose: () => void }) {
   const s = T[lang], now = useBkkNow();
   const [day, setDay] = useState<DayKey>(() => initialDay(typeof window === 'undefined' ? null : bkk().date));
-  const [onlyKey, setOnlyKey] = useState(false);
+  const [filter, setFilter] = useState<'all' | 'key' | Kind>('all');
+  const liveRef = useRef<HTMLDivElement>(null);
   const [showPast, setShowPast] = useState(false);
   const stripRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => { const e = (ev: KeyboardEvent) => { if (ev.key === 'Escape') onClose(); }; document.addEventListener('keydown', e); return () => document.removeEventListener('keydown', e); }, [onClose]);
-  useEffect(() => { stripRef.current?.querySelector<HTMLElement>('[aria-current="true"]')?.scrollIntoView({ inline: 'center', block: 'nearest' }); scrollRef.current?.scrollTo({ top: 0 }); setShowPast(false); }, [day]);
+  useEffect(() => { stripRef.current?.querySelector<HTMLElement>('[aria-current="true"]')?.scrollIntoView({ inline: 'center', block: 'nearest' }); scrollRef.current?.scrollTo({ top: 0 }); setShowPast(false); setFilter('all'); }, [day]);
+  useEffect(() => { if (!now || now.date !== day) return; const id = setTimeout(() => liveRef.current?.scrollIntoView({ block: 'start' }), 60); return () => clearTimeout(id); }, [day, !!now]);// eslint-disable-line react-hooks/exhaustive-deps
   const idx = DAYS.indexOf(day), items = SCHEDULE[day], hasKey = items.some(i => i.key);
-  const shown = onlyKey && hasKey ? items.filter(i => i.key) : items;
+  const kindsHere = (Object.keys(KINDS) as Kind[]).filter(k => items.some(i => kindOf(i) === k));
+  const f = filter === 'key' && !hasKey || (filter !== 'all' && filter !== 'key' && !kindsHere.includes(filter)) ? 'all' : filter;
+  const shown = f === 'all' ? items : f === 'key' ? items.filter(i => i.key) : items.filter(i => kindOf(i) === f);
   const rel = now ? daysBetween(now.date, day) : null; // 0 = today
   const isToday = rel === 0, nowMin = isToday && now ? now.min : null;
   const stOf = (it: ScheduleItem) => nowMin === null ? (rel !== null && rel < 0 ? 'past' : 'next') : mins(it.time) > nowMin ? 'next' : nowMin < endOf(it) ? 'live' : 'past';
@@ -93,14 +115,18 @@ export default function Schedule({ lang, onClose }: { lang: Language; onClose: (
   const [showStays, setShowStays] = useState(false);
   const go = (i: number) => setDay(DAYS[Math.min(9, Math.max(0, i))]);
   const body = (() => {
-    if (!isToday) return <div className="space-y-2.5">{slots(shown).map((sl, i) => <SlotView key={i} slot={sl} lang={lang} tone={rel !== null && rel < 0 ? 'past' : 'plain'} />)}</div>;
-    return <div className="space-y-2.5">
-      {pastCount > 0 && <button type="button" onClick={() => setShowPast(v => !v)} className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-[#cfd3cb] bg-[#f7f7f3] text-[12px] font-semibold text-[#53625a]">{showPast ? <ChevronUp size={15} /> : <ChevronDown size={15} />}{showPast ? s.hidePast : s.showPast(pastCount)}</button>}
-      {showPast && slots(past).map((sl, i) => <SlotView key={`p${i}`} slot={sl} lang={lang} tone="past" />)}
-      <div className="space-y-2">{liveShows.length ? <ul className="m-0 list-none space-y-2 p-0">{liveShows.map((it, i) => <div key={i} className="grid grid-cols-[3.4rem_1fr] gap-2 max-md:grid-cols-[3rem_1fr]"><div className="pt-2 text-[15px] font-bold tabular-nums text-[#176b53]">{it.time}</div><ul className="m-0 list-none p-0"><Row it={it} lang={lang} tone="now" left={endOf(it) - now!.min} /></ul></div>)}</ul> : <div className="rounded-xl border border-dashed border-[#cfe3d8] bg-[#f4faf6] px-3 py-3 text-center text-[12px] text-[#53625a]">{s.liveNone}</div>}
-        {liveStays.length > 0 && <div><button type="button" onClick={() => setShowStays(v => !v)} className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-[#cfe3d8] bg-[#f4faf6] text-[12px] font-semibold text-[#176b53]">{showStays ? <ChevronUp size={15} /> : <ChevronDown size={15} />}{s.open(liveStays.length)}</button>{showStays && <div className="mt-2 space-y-2.5">{slots(liveStays).map((sl, i) => <SlotView key={i} slot={sl} lang={lang} tone="plain" />)}</div>}</div>}
+    const List = (sl: Slot[], tone: Tone, firstNext?: boolean) => <div>{sl.map((x, i) => <SlotView key={x.time + i} slot={x} lang={lang} tone={firstNext && i === 0 ? 'next' : tone} now={nowMin} last={i === sl.length - 1} />)}</div>;
+    if (!isToday) return shown.length ? List(slots(shown), rel !== null && rel < 0 ? 'past' : 'plain') : <div className="rounded-xl bg-[#f7f7f3] px-3 py-4 text-center text-[13px] text-[#546258]">{s.none}</div>;
+    const Label = (children: React.ReactNode, c: string, extra?: React.ReactNode) => <div className="mb-1 mt-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide" style={{ color: c }}>{children}{extra}<span className="h-px flex-1 bg-current opacity-20" /></div>;
+    return <div>
+      {pastCount > 0 && <button type="button" onClick={() => setShowPast(v => !v)} className="mb-1 flex min-h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-[#cfd3cb] bg-[#f7f7f3] text-[12px] font-semibold text-[#53625a]">{showPast ? <ChevronUp size={15} /> : <ChevronDown size={15} />}{showPast ? s.hidePast : s.showPast(pastCount)}</button>}
+      {showPast && List(slots(past), "past")}
+      <div ref={liveRef} className="scroll-mt-14">
+        {Label(s.live, "#176b53")}
+        {liveShows.length ? List(slots(liveShows), "now") : <div className="rounded-xl border border-dashed border-[#cfe3d8] bg-[#f4faf6] px-3 py-3 text-center text-[12px] text-[#53625a]">{s.liveNone}</div>}
+        {liveStays.length > 0 && <div className="mt-1"><button type="button" onClick={() => setShowStays(v => !v)} className="flex min-h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-[#cfe3d8] bg-[#f4faf6] text-[12px] font-semibold text-[#176b53]">{showStays ? <ChevronUp size={15} /> : <ChevronDown size={15} />}{s.open(liveStays.length)}</button>{showStays && <div className="mt-2">{List(slots(liveStays), "plain")}</div>}</div>}
       </div>
-      {upSlots.length > 0 ? <div><div className="mb-1 mt-1 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-[#b36a00]">{s.next}{countdown && <span className="rounded-full bg-[#fff0cf] px-2 py-0.5 normal-case tracking-normal">{countdown}</span>}</div><div className="space-y-2.5">{upSlots.map((sl, i) => <SlotView key={`n${i}`} slot={sl} lang={lang} tone={i === 0 ? 'next' : 'plain'} />)}</div></div> : !liveShows.length && <div className="rounded-xl bg-[#f7f7f3] px-3 py-4 text-center text-[13px] text-[#546258]">{s.empty}</div>}
+      {upSlots.length > 0 ? <div>{Label(s.next, "#b36a00", countdown && <span className="rounded-full bg-[#fff0cf] px-2 py-0.5 normal-case tracking-normal">{countdown}</span>)}{List(upSlots, "plain", true)}</div> : !liveShows.length && <div className="mt-2 rounded-xl bg-[#f7f7f3] px-3 py-4 text-center text-[13px] text-[#546258]">{s.empty}</div>}
     </div>;
   })();
   return <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 max-md:p-0 max-md:items-end" onClick={onClose}>
@@ -116,15 +142,17 @@ export default function Schedule({ lang, onClose }: { lang: Language; onClose: (
           <button type="button" aria-label={s.nextDay} disabled={idx === 9} onClick={() => go(idx + 1)} className="grid h-11 w-9 shrink-0 place-items-center rounded-lg border-0 bg-transparent text-[#172a24] disabled:opacity-30"><ChevronRight size={20} /></button>
         </div>
       </div>
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
-        <div className="mb-2 flex flex-wrap items-center gap-2">
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 pb-3">
+        <>
+        <div className="mb-2 flex flex-wrap items-center gap-2 pt-3">
           <h3 className="m-0 text-[16px] font-bold text-[#172a24]">{dateLabel(day, lang)}</h3>
           {relTag && <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${isToday ? 'bg-[#e8175d] text-white' : 'bg-[#eceee9] text-[#53625a]'}`}>{relTag}</span>}
           {DAY_BADGE[day] && <span className="rounded-full bg-[#d9941f] px-2 py-0.5 text-[11px] font-bold text-white">{DAY_BADGE[day]![lang]}</span>}
-          <span className="ml-auto text-[11px] text-[#7b857f]">{shown.length} {s.items}</span>
+          {isToday && <button type="button" onClick={() => liveRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className="flex min-h-8 items-center gap-1 rounded-full border border-[#e8175d]/40 bg-white px-2.5 text-[11px] font-bold text-[#e8175d]"><LocateFixed size={12} />{s.nowLbl}</button>}<span className="ml-auto text-[11px] text-[#7b857f]">{shown.length} {s.items}</span>
         </div>
-        {now && !todayIsLive && <div className="mb-2 rounded-xl bg-[#fff6e0] px-3 py-2 text-[12px] font-semibold text-[#6b5314]">{now.date < DAYS[0] ? s.startsIn(daysBetween(now.date, DAYS[0])) : s.over}</div>}
-        {hasKey && <div className="mb-3 inline-flex rounded-xl border border-[#e5e5dc] bg-[#f4f5f2] p-0.5 text-[12px]" role="group">{([[false, s.all], [true, s.key]] as const).map(([v, l]) => <button key={String(v)} type="button" aria-pressed={onlyKey === v} onClick={() => setOnlyKey(v)} className={`min-h-9 rounded-[10px] border-0 px-3.5 font-semibold ${onlyKey === v ? 'bg-white text-[#176b53] shadow-sm' : 'bg-transparent text-[#53625a]'}`}>{v && <Star size={11} className="mr-1 inline" fill="currentColor" />}{l}</button>)}</div>}
+        {now && !todayIsLive && <div className="mb-2 rounded-xl bg-[#fff6e0] px-3 py-2.5 text-[15px] font-bold text-[#6b5314]">{now.date < DAYS[0] ? s.startsIn(daysBetween(now.date, DAYS[0])) : s.over}</div>}
+        <div className="sticky top-0 z-10 -mx-4 mb-1 flex gap-1.5 overflow-x-auto border-b border-[#eeeee8] bg-white px-4 py-2 shadow-[0_6px_8px_-6px_rgba(0,0,0,.12)] [scrollbar-width:none]" role="group">{([['all', s.all, null], ...(hasKey ? [['key', s.key, null]] : []), ...kindsHere.map(k => [k, KINDS[k][lang], KINDS[k].Icon])] as [string, string, React.ElementType | null][]).map(([v, l, Ic]) => <button key={v} type="button" aria-pressed={f === v} onClick={() => setFilter(v as typeof filter)} className={`flex min-h-9 shrink-0 items-center gap-1 rounded-full border px-3 text-[12px] font-semibold ${f === v ? 'border-[#176b53] bg-[#176b53] text-white' : 'border-[#e0e3dc] bg-white text-[#3c4a43]'}`}>{v === 'key' && <Star size={12} fill="currentColor" />}{Ic && <Ic size={13} />}{l}</button>)}</div>
+        </>
         {body}
         <div className="mt-5 grid grid-cols-2 gap-2 max-md:grid-cols-1">
           {idx > 0 && <Preview k={DAYS[idx - 1]} label={s.prevDay} lang={lang} side="prev" onGo={() => go(idx - 1)} />}
