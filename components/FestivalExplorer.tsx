@@ -1,5 +1,6 @@
 'use client';
 import VisitorCount from './VisitorCount';
+import Highlights from './Highlights';
 import dynamic from 'next/dynamic';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {ListChecks, Layers, ChevronDown, ChevronUp, Search, MapPin, Landmark, CalendarDays, Wrench, Menu, X, Plus, Minus, Navigation, Check, CircleDot, Flag as FlagIcon, BriefcaseMedical, CircleParking, Bus, Toilet, Info, LocateFixed, Sun, Sunset, Moon, Box, ArrowDownToLine,} from 'lucide-react';
@@ -64,7 +65,7 @@ export default function FestivalExplorer(){
  {mobileList&&<button className="mobile-drawer-backdrop" aria-label={ui.close} onClick={()=>S.setMobileList(false)}/>}
  <aside className={`sidebar ${mobileList?'show':''}`}><div className="sidebar-head"><div className="eyebrow">EXPLORE SUKHOTHAI</div><h2>{ui.explore}</h2><div className="search-box"><Search size={19}/><input ref={searchRef} aria-label={ui.search} value={query} onChange={e=>S.setQuery(e.target.value)} placeholder={ui.search}/>{query&&<button onClick={()=>S.setQuery('')} aria-label={ui.close}><X size={16}/></button>}</div></div>
  <div className="filters">{categoryButtons}</div><div className="list-caption">{filtered.length} {ui.count}</div>
- <div className="place-list">{filtered.length?filtered.map(p=><button key={p.id} className={`place-item ${selectedId===p.id?'active':''}`} onClick={()=>{S.select(p.id);S.setMobileList(false)}}><span className={`code ${p.category} m-${p.model} ${p.series??''}`}>{p.code}</span><span className="place-copy"><strong>{p.title[lang]}</strong><small>{catLabel(ui,p.category,lang,p.series)} · {p.title.en}</small></span><span className="arrow">›</span></button>):<div className="no-results">{ui.empty}</div>}</div>
+ <div className="place-list">{category==='all'&&!query.trim()&&<Highlights lang={lang} points={points} onPick={id=>{S.select(id);S.setMobileList(false)}}/>}{filtered.length?filtered.map(p=><button key={p.id} className={`place-item ${selectedId===p.id?'active':''}`} onClick={()=>{S.select(p.id);S.setMobileList(false)}}><span className={`code ${p.category} m-${p.model} ${p.series??''}`}>{p.code}</span><span className="place-copy"><strong>{p.title[lang]}</strong><small>{catLabel(ui,p.category,lang,p.series)} · {p.title.en}</small></span><span className="arrow">›</span></button>):<div className="no-results">{ui.empty}</div>}</div>
  <div className="sidebar-footer"><p className="m-0 mb-1 text-[10px] leading-4 text-[#8a7a4a] md:hidden">{ui.disclaimer}</p><p className="m-0 text-[11px] leading-5 text-[#77857d]">{{th:'จัดทำโดย',en:'Created by',zh:'制作'}[lang]} <a className="font-semibold text-[#176c54] underline" href="https://www.facebook.com/nayboom2536?locale=th_TH" target="_blank" rel="noreferrer">{{th:'นายบูม เม่นเผือก',en:'Nai Boom Menpheuak',zh:'Boom Menpheuak'}[lang]}</a><VisitorCount lang={lang} /></p></div>
  </aside>
  <section className="map-area"><ThreeVenue/>
