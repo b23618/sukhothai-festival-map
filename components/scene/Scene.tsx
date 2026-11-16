@@ -16,7 +16,7 @@ import { HeritageAt } from './heritage';
 import { Festive, UserDot } from './festive';
 import { Emblem } from './symbols';
 import { LOW } from '@/lib/perf';
-import { inDiorama } from '@/lib/georef';
+import { geoToGrid, inDiorama } from '@/lib/georef';
 import { endpoint } from '@/lib/route';
 import { walkRoute } from '@/lib/pathfind';
 import type { Pt } from '@/lib/geo';
@@ -122,6 +122,8 @@ function CameraRig() {
     if (mobile) tgt.addScaledVector(back, d * .15); else tgt.addScaledVector(new THREE.Vector3(-back.z, 0, back.x), -d * .16);
     goal.current = { t: tgt, p: tgt.clone().add(new THREE.Vector3(Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el)).multiplyScalar(d)), d: null };
   }, [c, routeFrom, routeTo, !!userPos]); // eslint-disable-line react-hooks/exhaustive-deps
+  // first GPS fix: fly to the visitor when the position lies on the terrain and no route is being framed
+  useEffect(() => { if (!c || !userPos || routeFrom || routeTo) return; const g = geoToGrid(userPos.lat, userPos.lng); if (!inDiorama(g)) return; const [x, z] = toWorld(...g); goal.current = { t: new THREE.Vector3(x, heightAt(...g), z), p: null, d: 7 }; }, [c, !!userPos]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!c || !zoomReq) return; const off = camera.position.clone().sub(c.target); off.setLength(THREE.MathUtils.clamp(off.length() * (zoomReq > 0 ? 1 / 1.35 : 1.35), c.minDistance, c.maxDistance)); camera.position.copy(c.target).add(off); c.update(); }, [zoomReq]); // eslint-disable-line react-hooks/exhaustive-deps
   useFrame((_, dt) => {
     if (!c) return; const g = goal.current, k = 1 - Math.exp(-5 * dt);

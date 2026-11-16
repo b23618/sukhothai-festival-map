@@ -189,7 +189,7 @@ export function UserDot() {
   const pos = useMapStore(s => s.userPos), ref = useRef<THREE.Mesh>(null);
   useFrame(st => { if (ref.current) { const k = 1 + (st.clock.elapsedTime % 1.6) * .9; ref.current.scale.set(k, k, 1); (ref.current.material as THREE.MeshBasicMaterial).opacity = .55 * (1 - (st.clock.elapsedTime % 1.6) / 1.6); } });
   if (!pos) return null;
-  const g = geoToGrid(pos.lat, pos.lng); if (g[0] < -30 || g[0] > 610 || g[1] < 20 || g[1] > 610) return null;
+  const g = geoToGrid(pos.lat, pos.lng); if (!inDiorama(g)) return null;
   const [x, z] = toWorld(...g), y = Math.max(heightAt(...g), WATER_Y) + .03;
   return <group position={[x, y, z]}><mesh position={[0, .16, 0]} renderOrder={9}><sphereGeometry args={[.07, 16, 12]} /><meshBasicMaterial color="#2b7bff" depthTest={false} /></mesh><mesh position={[0, .16, 0]} renderOrder={8}><sphereGeometry args={[.1, 16, 12]} /><meshBasicMaterial color="#ffffff" depthTest={false} /></mesh><mesh ref={ref} rotation={[-Math.PI / 2, 0, 0]} renderOrder={7}><ringGeometry args={[.1, .13, 32]} /><meshBasicMaterial color="#2b7bff" transparent depthTest={false} /></mesh></group>;
 }
